@@ -1,0 +1,83 @@
+# ============================
+# Core Backend
+# ============================
+fastapi
+uvicorn[standard]
+python-dotenv
+pydantic
+pydantic-settings
+
+# ============================
+# LangChain Ecosystem
+# ============================
+langchain
+langchain-core
+langchain-community
+langchain-google-genai
+langchain-openai
+langgraph
+langsmith
+langchain-groq
+
+# ============================
+# Vector Database
+# ============================
+chromadb
+faiss-cpu
+
+# ============================
+# Embeddings / Tokenization
+# ============================
+tiktoken
+
+# ============================
+# Document Loaders
+# ============================
+pypdf
+pymupdf
+unstructured
+beautifulsoup4
+lxml
+
+# ============================
+# Search Tools
+# ============================
+duckduckgo-search
+wikipedia
+arxiv
+
+# ============================
+# Database
+# ============================
+sqlalchemy
+psycopg[binary]
+alembic
+
+# ============================
+# Utilities
+# ============================
+httpx
+orjson
+tenacity
+aiofiles
+
+# ============================
+# Logging
+# ============================
+loguru
+
+# ============================
+# Testing
+# ============================
+pytest
+pytest-asyncio
+
+# ============================
+# Code Quality
+# ============================
+black
+ruff
+mypy
+langchain_ollama
+langchain_chroma
+python-multipart
