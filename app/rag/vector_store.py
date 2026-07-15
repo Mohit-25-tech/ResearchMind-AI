@@ -20,3 +20,4 @@ def create_vector_store(chunks):
     vector_store.add_documents(chunks)
 
     return vector_store
+

@@ -1,10 +1,7 @@
-from app.rag.loader import load_pdf
-from app.rag.splitter import split_documents
-from app.rag.vector_store import create_vector_store
+from app.rag.vector_store import get_vector_store
 
-docs = load_pdf("uploads/docker.pdf")
-chunks = split_documents(docs)
+store = get_vector_store()
 
-create_vector_store(chunks)
+data = store.get()
 
-print("Success")
+print(data["metadatas"][0].keys())
