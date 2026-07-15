@@ -21,3 +21,16 @@ def create_vector_store(chunks):
 
     return vector_store
 
+
+def delete_document_vectors(document_id: str):
+    """
+    Delete all chunks belonging to a document.
+    """
+
+    vector_store = get_vector_store()
+
+    vector_store.delete(
+        where={
+            "document_id": document_id
+        }
+    )

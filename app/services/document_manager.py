@@ -8,6 +8,17 @@ UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 
+def delete_uploaded_pdf(filename: str):
+    """
+    Delete uploaded PDF from disk.
+    """
+
+    pdf_path = UPLOAD_DIR / filename
+
+    if pdf_path.exists():
+        pdf_path.unlink()
+
+
 def calculate_file_hash(file_path: Path) -> str:
     """
     Calculate SHA-256 hash of a file.
@@ -120,3 +131,62 @@ def get_all_documents():
     conn.close()
 
     return [dict(row) for row in rows]
+
+def get_document(document_id: str):
+    """
+    Returns one document by document_id.
+    """
+
+    conn = get_connection()
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            document_id,
+            filename,
+            file_hash,
+            pages,
+            chunks,
+            uploaded_at
+        FROM documents
+        WHERE document_id = ?
+        """,
+        (document_id,)
+    )
+
+    row = cursor.fetchone()
+
+    conn.close()
+
+    if row is None:
+        return None
+
+    return dict(row)
+
+def delete_document_record(document_id: str):
+    """
+    Deletes a document from SQLite.
+    """
+
+    conn = get_connection()
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        DELETE FROM documents
+        WHERE document_id = ?
+        """,
+        (document_id,)
+    )
+
+    conn.commit()
+
+    deleted = cursor.rowcount
+
+    conn.close()
+
+    return deleted > 0
+
