@@ -1,7 +1,23 @@
-from app.rag.vector_store import get_vector_store
+from app.services.conversation_manager import (
+    save_conversation,
+    get_conversation_history,
+)
 
-store = get_vector_store()
+session = "demo"
 
-data = store.get()
+save_conversation(
+    session,
+    "What is BERT?",
+    "BERT is a transformer model."
+)
 
-print(data["metadatas"][0].keys())
+save_conversation(
+    session,
+    "Explain LSTM.",
+    "LSTM is a recurrent neural network."
+)
+
+history = get_conversation_history(session)
+
+for row in history:
+    print(dict(row))

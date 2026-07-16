@@ -1,31 +1,34 @@
 def extract_sources(documents):
     """
-    Extract source metadata from retrieved documents.
+    Extract unique document sources.
     """
 
-    sources = []
-
-    seen = set()
+    grouped = {}
 
     for document in documents:
 
         metadata = document.metadata
 
-        source = {
-            "document_id": metadata.get("document_id"),
-            "filename": metadata.get("source"),
-            "page": metadata.get("page"),
-            "chunk_id": metadata.get("chunk_id"),
-        }
+        filename = metadata.get("source")
+        document_id = metadata.get("document_id")
+        page = metadata.get("page")
 
-        key = (
-            source["document_id"],
-            source["page"],
-            source["chunk_id"],
-        )
+        if document_id not in grouped:
 
-        if key not in seen:
-            seen.add(key)
-            sources.append(source)
+            grouped[document_id] = {
+                "document_id": document_id,
+                "filename": filename,
+                "pages": set(),
+            }
+
+        grouped[document_id]["pages"].add(page)
+
+    sources = []
+
+    for source in grouped.values():
+
+        source["pages"] = sorted(list(source["pages"]))
+
+        sources.append(source)
 
     return sources

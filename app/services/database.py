@@ -48,5 +48,21 @@ def initialize_database():
         );
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS conversations(
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            session_id TEXT NOT NULL,
+
+            question TEXT NOT NULL,
+
+            answer TEXT NOT NULL,
+
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+        )
+        """)
+
     conn.commit()
     conn.close()
