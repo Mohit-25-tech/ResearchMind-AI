@@ -1,16 +1,15 @@
 from app.rag.vector_store import get_vector_store
 
 
-def get_relevant_chunks(query: str, k: int = 4):
+def retrieve_chunks(query: str, k: int = 4):
+    """
+    Retrieve the most relevant document chunks.
+    """
 
     vector_store = get_vector_store()
 
     retriever = vector_store.as_retriever(
-        search_type="mmr",
-        search_kwargs={
-            "k": 8,
-            "fetch_k": 20,
-        },
+        search_kwargs={"k": k}
     )
 
     return retriever.invoke(query)

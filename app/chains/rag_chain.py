@@ -2,23 +2,35 @@ from langchain_core.output_parsers import StrOutputParser
 
 from app.models.llm import model
 from app.prompts.prompts import rag_prompt
-from app.rag.retriver import get_relevant_chunks
+
+from app.rag.retriver import retrieve_chunks
+from app.rag.context import build_context
+from app.rag.sources import extract_sources
 
 
-def ask_rag(question: str):
+chain = rag_prompt | model | StrOutputParser()
 
-    docs = get_relevant_chunks(question)
 
-    context = "\n\n".join(
-        doc.page_content for doc in docs
-    )
+def ask_rag(question: str, k: int = 5):
 
-    chain = rag_prompt | model | StrOutputParser()
+    # Retrieve relevant chunks
+    documents = retrieve_chunks(question, k)
 
-    return chain.invoke(
+    # Build context
+    context = build_context(documents)
+
+    # Extract sources
+    sources = extract_sources(documents)
+
+    # Generate answer
+    answer = chain.invoke(
         {
-            "context":context,
-            "question":question
+            "context": context,
+            "question": question
         }
     )
-    
+
+    return {
+        "answer": answer,
+        "sources": sources
+    }
