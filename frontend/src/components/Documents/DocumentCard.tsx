@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { FileText, Trash2, Layers, BookOpen, Clock } from "lucide-react";
+import { motion } from "framer-motion";
+import { FileText, Trash2, BookOpen, Layers, Clock } from "lucide-react";
 import type { Document } from "../../types/document";
 import { formatDate } from "../../utils/formatDate";
 
@@ -34,89 +35,82 @@ export default function DocumentCard({
   }
 
   return (
-    <div
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -4 }}
       onClick={() => onSelect(document.document_id)}
-      className={`group relative rounded-lg p-3 cursor-pointer transition-all duration-150
-        border
+      className={`group relative rounded-md px-2.5 py-2 cursor-pointer transition-all duration-150
         ${
           isSelected
-            ? "border-accent/40 bg-accent-subtle"
-            : "border-transparent hover:bg-surface-hover"
+            ? "bg-accent-subtle border-l-2 border-accent"
+            : "hover:bg-surface-hover border-l-2 border-transparent"
         }`}
     >
-      {/* Header row: icon + filename + delete */}
-      <div className="flex items-start gap-2.5">
+      {/* Header: icon + filename + delete */}
+      <div className="flex items-center gap-2">
         <FileText
-          size={16}
-          className={`mt-0.5 shrink-0 ${
-            isSelected ? "text-accent" : "text-text-muted"
-          }`}
+          size={13}
+          className={`shrink-0 ${isSelected ? "text-accent" : "text-text-muted"}`}
         />
-        <div className="flex-1 min-w-0">
-          <p
-            className={`text-sm font-medium truncate ${
-              isSelected ? "text-accent-hover" : "text-text-primary"
-            }`}
-            title={document.filename}
-          >
-            {document.filename}
-          </p>
-        </div>
-
-        {/* Delete button */}
+        <p
+          className={`text-xs font-medium truncate flex-1 ${
+            isSelected ? "text-accent-hover" : "text-text-primary"
+          }`}
+          title={document.filename}
+        >
+          {document.filename}
+        </p>
         {!showConfirm && (
           <button
             onClick={handleDelete}
-            className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all
-                       text-text-muted hover:text-error hover:bg-error-subtle cursor-pointer"
-            title="Delete document"
+            className="opacity-0 group-hover:opacity-100 p-0.5 rounded transition-all
+                       text-text-muted hover:text-error cursor-pointer"
+            title="Delete"
           >
-            <Trash2 size={13} />
+            <Trash2 size={11} />
           </button>
         )}
       </div>
 
-      {/* Meta row */}
-      <div className="flex items-center gap-3 mt-2 ml-[26px]">
-        <span className="flex items-center gap-1 text-xs text-text-muted">
-          <BookOpen size={11} />
-          {document.pages} pages
+      {/* Meta */}
+      <div className="flex items-center gap-2.5 mt-1 ml-[21px]">
+        <span className="flex items-center gap-0.5 text-[10px] text-text-muted">
+          <BookOpen size={9} />
+          {document.pages}p
         </span>
-        <span className="flex items-center gap-1 text-xs text-text-muted">
-          <Layers size={11} />
-          {document.chunks} chunks
+        <span className="flex items-center gap-0.5 text-[10px] text-text-muted">
+          <Layers size={9} />
+          {document.chunks}c
         </span>
-      </div>
-
-      {/* Upload time */}
-      <div className="flex items-center gap-1 mt-1.5 ml-[26px]">
-        <Clock size={10} className="text-text-muted" />
-        <span className="text-[11px] text-text-muted">
+        <span className="flex items-center gap-0.5 text-[10px] text-text-muted">
+          <Clock size={9} />
           {formatDate(document.uploaded_at)}
         </span>
       </div>
 
-      {/* Inline delete confirmation */}
+      {/* Delete confirmation */}
       {showConfirm && (
         <div
-          className="flex items-center gap-2 mt-2 ml-[26px]"
+          className="flex items-center gap-2 mt-1.5 ml-[21px]"
           onClick={(e) => e.stopPropagation()}
         >
-          <span className="text-xs text-text-secondary">Delete?</span>
+          <span className="text-[10px] text-text-secondary">Delete?</span>
           <button
             onClick={handleDelete}
-            className="text-xs text-error hover:text-red-400 font-medium cursor-pointer"
+            className="text-[10px] text-error hover:text-red-400 font-medium cursor-pointer"
           >
             Yes
           </button>
           <button
             onClick={handleCancelDelete}
-            className="text-xs text-text-muted hover:text-text-secondary cursor-pointer"
+            className="text-[10px] text-text-muted hover:text-text-secondary cursor-pointer"
           >
-            Cancel
+            No
           </button>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

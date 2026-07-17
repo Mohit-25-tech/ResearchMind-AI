@@ -1,7 +1,17 @@
-import Home from "./pages/Home";
+import { Routes, Route, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import Landing from "./pages/Landing";
+import Dashboard from "./pages/Dashboard";
 
-function App() {
-  return <Home />;
+export default function App() {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<Landing />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </AnimatePresence>
+  );
 }
-
-export default App;

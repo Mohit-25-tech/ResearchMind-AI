@@ -1,20 +1,44 @@
 import { BrainCircuit } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-export default function Header() {
+interface HeaderProps {
+  selectedDocumentName: string | null;
+}
+
+export default function Header({ selectedDocumentName }: HeaderProps) {
+  const navigate = useNavigate();
+
   return (
-    <header
-      className="flex items-center gap-3 px-6 py-3.5 border-b border-border bg-surface"
-    >
-      <div className="flex items-center gap-2.5">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent-subtle">
-          <BrainCircuit size={18} className="text-accent" />
+    <header className="flex items-center gap-3 px-4 h-12 border-b border-border bg-surface/80 backdrop-blur-sm shrink-0">
+      <button
+        onClick={() => navigate("/")}
+        className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+      >
+        <div className="flex items-center justify-center w-6 h-6 rounded-md bg-accent-subtle">
+          <BrainCircuit size={13} className="text-accent" />
         </div>
-        <h1 className="text-base font-semibold tracking-tight text-text-primary">
-          AI Research Assistant
-        </h1>
-      </div>
-      <div className="ml-auto flex items-center gap-2">
-        <span className="text-xs text-text-muted px-2 py-1 rounded-md bg-surface-elevated">
+        <span className="text-[13px] font-semibold tracking-tight text-text-primary">
+          ResearchMind
+        </span>
+      </button>
+
+      {/* Separator */}
+      <div className="w-px h-4 bg-border" />
+
+      {/* Context indicator */}
+      <span className="text-xs text-text-muted truncate">
+        {selectedDocumentName ? (
+          <>
+            Chatting with{" "}
+            <span className="text-text-secondary font-medium">{selectedDocumentName}</span>
+          </>
+        ) : (
+          "All Documents"
+        )}
+      </span>
+
+      <div className="ml-auto">
+        <span className="text-[10px] text-text-faint px-1.5 py-0.5 rounded bg-surface-elevated">
           v1.0
         </span>
       </div>

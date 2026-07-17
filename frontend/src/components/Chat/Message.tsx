@@ -30,19 +30,19 @@ export default function Message({
     }
   }
 
-  // Thinking state — assistant placeholder with no content yet
+  // Thinking state
   if (isAssistant && message.isTyping && message.content === "") {
     return (
-      <div className="flex gap-3 px-6 py-4">
-        <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-accent-subtle shrink-0 mt-0.5">
-          <BrainCircuit size={14} className="text-accent" />
+      <div className="flex gap-3 px-5 py-3">
+        <div className="flex items-center justify-center w-6 h-6 rounded-md bg-accent-subtle shrink-0 mt-0.5">
+          <BrainCircuit size={12} className="text-accent" />
         </div>
-        <div className="flex items-center gap-1.5 pt-1.5">
-          <span className="text-sm text-text-secondary">Thinking</span>
+        <div className="flex items-center gap-1.5 pt-1">
+          <span className="text-xs text-text-muted">Thinking</span>
           <span className="flex gap-0.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-text-muted loading-dot" />
-            <span className="w-1.5 h-1.5 rounded-full bg-text-muted loading-dot" />
-            <span className="w-1.5 h-1.5 rounded-full bg-text-muted loading-dot" />
+            <span className="w-1 h-1 rounded-full bg-text-muted loading-dot" />
+            <span className="w-1 h-1 rounded-full bg-text-muted loading-dot" />
+            <span className="w-1 h-1 rounded-full bg-text-muted loading-dot" />
           </span>
         </div>
       </div>
@@ -50,39 +50,31 @@ export default function Message({
   }
 
   return (
-    <div
-      className={`flex gap-3 px-6 py-4 ${
-        isUser ? "flex-row-reverse" : ""
-      }`}
-    >
+    <div className={`flex gap-3 px-5 py-3 ${isUser ? "flex-row-reverse" : ""}`}>
       {/* Avatar */}
       <div
-        className={`flex items-center justify-center w-7 h-7 rounded-lg shrink-0 mt-0.5 ${
-          isUser
-            ? "bg-user-bubble"
-            : "bg-accent-subtle"
+        className={`flex items-center justify-center w-6 h-6 rounded-md shrink-0 mt-0.5 ${
+          isUser ? "bg-user-bubble" : "bg-accent-subtle"
         }`}
       >
         {isUser ? (
-          <User size={14} className="text-user-bubble-text" />
+          <User size={12} className="text-user-bubble-text" />
         ) : (
-          <BrainCircuit size={14} className="text-accent" />
+          <BrainCircuit size={12} className="text-accent" />
         )}
       </div>
 
       {/* Content */}
-      <div
-        className={`max-w-[75%] ${isUser ? "text-right" : ""}`}
-      >
+      <div className={`min-w-0 max-w-[80%] ${isUser ? "text-right" : ""}`}>
         <div
-          className={`inline-block rounded-2xl px-4 py-2.5 ${
+          className={`inline-block rounded-xl px-3.5 py-2 ${
             isUser
-              ? "bg-user-bubble text-user-bubble-text rounded-tr-md"
-              : "bg-surface-elevated text-text-primary rounded-tl-md"
+              ? "bg-user-bubble text-user-bubble-text rounded-tr-sm"
+              : "bg-surface-elevated text-text-primary rounded-tl-sm"
           }`}
         >
           {isUser ? (
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+            <p className="text-[13px] leading-relaxed whitespace-pre-wrap">{message.content}</p>
           ) : (
             <div className={`prose-chat ${message.isTyping ? "typing-cursor" : ""}`}>
               <ReactMarkdown
@@ -95,24 +87,24 @@ export default function Message({
           )}
         </div>
 
-        {/* Action buttons for assistant messages */}
+        {/* Actions */}
         {isAssistant && !message.isTyping && message.content && (
-          <div className="flex items-center gap-1 mt-1.5">
+          <div className="flex items-center gap-0.5 mt-1">
             <button
               onClick={handleCopy}
-              className="flex items-center gap-1 px-2 py-1 rounded-md text-xs
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px]
                          text-text-muted hover:text-text-secondary hover:bg-surface-hover
                          transition-colors cursor-pointer"
-              title="Copy answer"
+              title="Copy"
             >
               {copied ? (
                 <>
-                  <Check size={12} className="text-success" />
+                  <Check size={10} className="text-success" />
                   <span className="text-success">Copied</span>
                 </>
               ) : (
                 <>
-                  <Copy size={12} />
+                  <Copy size={10} />
                   <span>Copy</span>
                 </>
               )}
@@ -121,13 +113,13 @@ export default function Message({
             {isLast && (
               <button
                 onClick={onRegenerate}
-                className="flex items-center gap-1 px-2 py-1 rounded-md text-xs
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px]
                            text-text-muted hover:text-text-secondary hover:bg-surface-hover
                            transition-colors cursor-pointer"
-                title="Regenerate response"
+                title="Regenerate"
               >
-                <RefreshCw size={12} />
-                <span>Regenerate</span>
+                <RefreshCw size={10} />
+                <span>Retry</span>
               </button>
             )}
           </div>

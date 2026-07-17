@@ -1,4 +1,5 @@
 import { FileText } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 import type { Document } from "../../types/document";
 import DocumentCard from "./DocumentCard";
 import Loading from "../Common/Loading";
@@ -25,7 +26,7 @@ export default function DocumentList({
   onRetry,
 }: DocumentListProps) {
   if (isLoading) {
-    return <Loading text="Fetching documents..." size={18} />;
+    return <Loading text="Loading..." size={16} />;
   }
 
   if (error) {
@@ -35,24 +36,26 @@ export default function DocumentList({
   if (documents.length === 0) {
     return (
       <EmptyState
-        icon={<FileText size={32} />}
-        title="Upload your first research paper."
-        subtitle="Supports PDF documents."
+        icon={<FileText size={24} />}
+        title="No documents yet"
+        subtitle="Upload a PDF to get started."
       />
     );
   }
 
   return (
-    <div className="flex flex-col gap-1 mt-1">
-      {documents.map((doc) => (
-        <DocumentCard
-          key={doc.document_id}
-          document={doc}
-          isSelected={selectedDocumentId === doc.document_id}
-          onSelect={onSelect}
-          onDelete={onDelete}
-        />
-      ))}
+    <div className="flex flex-col gap-0.5">
+      <AnimatePresence mode="popLayout">
+        {documents.map((doc) => (
+          <DocumentCard
+            key={doc.document_id}
+            document={doc}
+            isSelected={selectedDocumentId === doc.document_id}
+            onSelect={onSelect}
+            onDelete={onDelete}
+          />
+        ))}
+      </AnimatePresence>
     </div>
   );
 }

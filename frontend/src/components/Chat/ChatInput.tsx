@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback } from "react";
-import { SendHorizontal } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 
 interface ChatInputProps {
   isLoading: boolean;
@@ -18,15 +18,13 @@ export default function ChatInput({
     ? `Ask about "${selectedDocumentName}"...`
     : "Ask a question about your research papers...";
 
-  // Auto-resize the textarea to fit content
   const autoResize = useCallback(() => {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, 150)}px`;
   }, []);
 
-  // Reset height when loading finishes (message was sent)
   useEffect(() => {
     if (!isLoading && textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -44,8 +42,6 @@ export default function ChatInput({
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    // Enter or Ctrl+Enter → send
-    // Shift+Enter → newline
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -53,36 +49,34 @@ export default function ChatInput({
   }
 
   return (
-    <div className="border-t border-border bg-surface px-4 py-3">
-      <div className="flex items-end gap-2 max-w-4xl mx-auto">
-        <div className="flex-1 relative">
-          <textarea
-            ref={textareaRef}
-            placeholder={placeholder}
-            disabled={isLoading}
-            onInput={autoResize}
-            onKeyDown={handleKeyDown}
-            rows={1}
-            className="w-full resize-none rounded-xl bg-surface-elevated border border-border
-                       px-4 py-3 text-sm text-text-primary placeholder:text-text-muted
-                       focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20
-                       disabled:opacity-50 disabled:cursor-not-allowed
-                       transition-colors"
-          />
-        </div>
+    <div className="border-t border-border bg-bg px-4 py-3">
+      <div className="max-w-3xl mx-auto relative">
+        <textarea
+          ref={textareaRef}
+          placeholder={placeholder}
+          disabled={isLoading}
+          onInput={autoResize}
+          onKeyDown={handleKeyDown}
+          rows={1}
+          className="w-full resize-none rounded-xl bg-surface-elevated border border-border
+                     pl-4 pr-12 py-3 text-sm text-text-primary placeholder:text-text-muted
+                     focus:outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/10
+                     disabled:opacity-40 disabled:cursor-not-allowed
+                     transition-colors"
+        />
         <button
           onClick={handleSend}
           disabled={isLoading}
-          className="flex items-center justify-center w-10 h-10 rounded-xl
+          className="absolute right-2 bottom-2 flex items-center justify-center w-8 h-8 rounded-lg
                      bg-accent text-white hover:bg-accent-hover
-                     disabled:opacity-40 disabled:cursor-not-allowed
-                     transition-colors cursor-pointer shrink-0"
-          title="Send message"
+                     disabled:opacity-30 disabled:cursor-not-allowed
+                     transition-colors cursor-pointer"
+          title="Send"
         >
-          <SendHorizontal size={18} />
+          <ArrowUp size={15} />
         </button>
       </div>
-      <p className="text-[11px] text-text-muted text-center mt-2">
+      <p className="text-[10px] text-text-faint text-center mt-1.5">
         Enter to send · Shift+Enter for new line
       </p>
     </div>

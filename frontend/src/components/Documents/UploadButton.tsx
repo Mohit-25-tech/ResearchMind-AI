@@ -26,7 +26,6 @@ export default function UploadButton({
     const file = e.target.files?.[0];
     if (file) {
       onUpload(file);
-      // Reset so the same file can be re-uploaded if needed
       e.target.value = "";
     }
   }
@@ -44,33 +43,33 @@ export default function UploadButton({
       <button
         onClick={handleClick}
         disabled={isUploading}
-        className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg
-                   text-sm font-medium transition-all cursor-pointer
-                   bg-accent text-white hover:bg-accent-hover
-                   disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-md
+                   text-xs font-medium transition-all cursor-pointer
+                   border border-border hover:border-border-strong
+                   bg-surface-elevated text-text-secondary hover:text-text-primary
+                   disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        <Upload size={15} />
+        <Upload size={12} />
         {isUploading ? "Uploading..." : "Upload PDF"}
       </button>
 
-      {/* Progress bar */}
+      {/* Progress */}
       {isUploading && uploadProgress !== null && (
-        <div className="mt-2.5">
-          <div className="w-full h-1.5 bg-surface-elevated rounded-full overflow-hidden">
+        <div className="mt-2">
+          <div className="w-full h-1 bg-surface-active rounded-full overflow-hidden">
             <div
               className="h-full bg-accent rounded-full transition-all duration-300 progress-bar"
               style={{ width: `${uploadProgress}%` }}
             />
           </div>
-          <p className="text-xs text-text-muted mt-1 text-center tabular-nums">
+          <p className="text-[10px] text-text-muted mt-1 text-center tabular-nums">
             {uploadProgress}%
           </p>
         </div>
       )}
 
-      {/* Error */}
       {uploadError && (
-        <p className="text-xs text-error mt-2 text-center">{uploadError}</p>
+        <p className="text-[10px] text-error mt-1.5 text-center">{uploadError}</p>
       )}
     </div>
   );

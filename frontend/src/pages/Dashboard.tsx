@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import Header from "../components/Layout/Header";
 import Sidebar from "../components/Layout/Sidebar";
 import ChatBox from "../components/Chat/ChatBox";
@@ -6,7 +7,7 @@ import SourcePanel from "../components/Chat/SourcePanel";
 import { useDocuments } from "../hooks/useDocuments";
 import { useChat } from "../hooks/useChat";
 
-export default function Home() {
+export default function Dashboard() {
   const {
     documents,
     isLoading: docsLoading,
@@ -32,7 +33,6 @@ export default function Home() {
     copyAnswer,
   } = useChat();
 
-  // Find selected document name for placeholder text
   const selectedDoc = documents.find(
     (d) => d.document_id === selectedDocumentId,
   );
@@ -51,14 +51,18 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden">
-      {/* Header */}
-      <Header />
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="flex flex-col h-screen w-screen overflow-hidden bg-bg"
+    >
+      <Header selectedDocumentName={selectedDocName} />
 
-      {/* Main 3-column layout */}
       <div className="flex flex-1 min-h-0">
-        {/* Left Sidebar — Documents */}
-        <div className="w-72 shrink-0">
+        {/* Left — Research Library */}
+        <div className="w-64 shrink-0">
           <Sidebar
             documents={documents}
             isLoading={docsLoading}
@@ -75,7 +79,7 @@ export default function Home() {
         </div>
 
         {/* Center — Chat */}
-        <div className="flex-1 flex flex-col min-w-0 bg-bg">
+        <div className="flex-1 flex flex-col min-w-0 border-x border-border">
           <ChatBox
             messages={messages}
             isLoading={chatLoading}
@@ -92,11 +96,11 @@ export default function Home() {
           />
         </div>
 
-        {/* Right Sidebar — Sources */}
-        <div className="w-72 shrink-0">
+        {/* Right — Sources */}
+        <div className="w-64 shrink-0">
           <SourcePanel sources={lastSources} />
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -1,22 +1,25 @@
 import type { ReactNode } from "react";
+import { motion } from "framer-motion";
 
 interface EmptyStateProps {
-  /** Icon element to display above the title */
   icon: ReactNode;
-  /** Main heading */
   title: string;
-  /** Secondary description text */
   subtitle?: string;
 }
 
 export default function EmptyState({ icon, title, subtitle }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 py-12 px-4 text-center">
-      <div className="text-text-muted">{icon}</div>
-      <h3 className="text-sm font-medium text-text-secondary">{title}</h3>
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="flex flex-col items-center justify-center gap-2 py-10 px-4 text-center"
+    >
+      <div className="text-text-faint">{icon}</div>
+      <h3 className="text-xs font-medium text-text-muted">{title}</h3>
       {subtitle && (
-        <p className="text-xs text-text-muted">{subtitle}</p>
+        <p className="text-[11px] text-text-faint">{subtitle}</p>
       )}
-    </div>
+    </motion.div>
   );
 }

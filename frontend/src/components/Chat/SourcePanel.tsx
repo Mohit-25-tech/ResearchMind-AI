@@ -7,39 +7,38 @@ interface SourcePanelProps {
 
 export default function SourcePanel({ sources }: SourcePanelProps) {
   return (
-    <aside className="flex flex-col h-full border-l border-border bg-surface">
+    <aside className="flex flex-col h-full bg-surface">
       {/* Header */}
-      <div className="px-4 py-3.5 border-b border-border">
-        <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
-          <BookOpen size={15} className="text-text-secondary" />
+      <div className="px-3 pt-3 pb-2">
+        <h2 className="text-[11px] font-semibold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
+          <BookOpen size={12} />
           Sources
         </h2>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 py-3">
+      <div className="flex-1 overflow-y-auto px-3 pb-3">
         {sources.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <FileText size={28} className="text-text-muted mb-3" />
-            <p className="text-xs text-text-muted leading-relaxed">
-              Sources will appear here<br />after you ask a question.
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <FileText size={20} className="text-text-faint mb-2" />
+            <p className="text-[11px] text-text-muted leading-relaxed">
+              Sources will appear here
+              <br />
+              after you ask a question.
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             {sources.map((source, idx) => (
               <div
                 key={`${source.document_id}-${idx}`}
-                className="rounded-xl border border-border bg-surface-elevated p-3.5"
+                className="rounded-lg border border-border bg-surface-elevated/50 p-3"
               >
                 {/* Filename */}
-                <div className="flex items-start gap-2 mb-2.5">
-                  <FileText
-                    size={14}
-                    className="text-accent mt-0.5 shrink-0"
-                  />
+                <div className="flex items-start gap-1.5 mb-2">
+                  <FileText size={12} className="text-accent mt-0.5 shrink-0" />
                   <p
-                    className="text-sm font-medium text-text-primary truncate"
+                    className="text-xs font-medium text-text-primary truncate"
                     title={source.filename}
                   >
                     {source.filename}
@@ -47,12 +46,12 @@ export default function SourcePanel({ sources }: SourcePanelProps) {
                 </div>
 
                 {/* Page badges */}
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {source.pages.map((page) => (
+                <div className="flex flex-wrap gap-1 mb-1.5">
+                  {(Array.isArray(source.pages) ? source.pages : []).map((page) => (
                     <span
                       key={page}
-                      className="inline-flex items-center px-2 py-0.5 rounded-md
-                                 text-[11px] font-medium
+                      className="inline-flex items-center px-1.5 py-0.5 rounded
+                                 text-[10px] font-medium
                                  bg-accent-subtle text-accent"
                     >
                       p.{page + 1}
@@ -60,9 +59,10 @@ export default function SourcePanel({ sources }: SourcePanelProps) {
                   ))}
                 </div>
 
-                {/* Passages count */}
-                <p className="text-[11px] text-text-muted">
-                  {source.pages.length} {source.pages.length === 1 ? "passage" : "passages"} retrieved
+                {/* Count */}
+                <p className="text-[10px] text-text-muted">
+                  {(Array.isArray(source.pages) ? source.pages.length : 0)}{" "}
+                  {(Array.isArray(source.pages) ? source.pages.length : 0) === 1 ? "passage" : "passages"} retrieved
                 </p>
               </div>
             ))}

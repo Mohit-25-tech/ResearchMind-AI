@@ -1,35 +1,42 @@
 @import "tailwindcss";
 
 /* ───────────────────────────────────────────
-   Tailwind v4 Theme — Dark Only
+   Tailwind v4 Theme — Premium Light (Notion / Linear / Perplexity style)
    ─────────────────────────────────────────── */
 @theme {
-  --color-bg: #0b0d13;
-  --color-surface: #12141c;
-  --color-surface-elevated: #1a1d28;
-  --color-surface-hover: #1f2230;
-  --color-border: #252836;
-  --color-border-strong: #333750;
+  --color-bg: #F8FAFC;
+  --color-bg-subtle: #F1F5F9;
+  --color-surface: #FFFFFF;
+  --color-surface-elevated: #F8FAFC;
+  --color-surface-hover: #F1F5F9;
+  --color-surface-active: #E2E8F0;
+  --color-border: #E2E8F0;
+  --color-border-strong: #CBD5E1;
 
-  --color-text-primary: #e8eaf0;
-  --color-text-secondary: #8b8fa3;
-  --color-text-muted: #5c6078;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748B;
+  --color-text-faint: #94A3B8;
 
-  --color-accent: #6366f1;
-  --color-accent-hover: #818cf8;
-  --color-accent-dim: #4f46e5;
-  --color-accent-subtle: rgba(99, 102, 241, 0.12);
+  --color-accent: #6366F1;
+  --color-accent-hover: #4F46E5;
+  --color-accent-dim: #3730A3;
+  --color-accent-subtle: rgba(99, 102, 241, 0.05);
+  --color-accent-glow: rgba(99, 102, 241, 0.08);
 
-  --color-user-bubble: #4f46e5;
-  --color-user-bubble-text: #f0f0ff;
+  --color-violet: #8B5CF6;
+  --color-violet-subtle: rgba(139, 92, 246, 0.05);
 
-  --color-error: #ef4444;
-  --color-error-subtle: rgba(239, 68, 68, 0.12);
-  --color-success: #10b981;
-  --color-success-subtle: rgba(16, 185, 129, 0.12);
-  --color-warning: #f59e0b;
+  --color-user-bubble: #EEF2FF;
+  --color-user-bubble-text: #3730A3;
 
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-error: #EF4444;
+  --color-error-subtle: rgba(239, 68, 68, 0.06);
+  --color-success: #22C55E;
+  --color-success-subtle: rgba(34, 197, 94, 0.06);
+  --color-warning: #F59E0B;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
 /* ───────────────────────────────────────────
@@ -49,12 +56,17 @@ body,
   -moz-osx-font-smoothing: grayscale;
 }
 
+::selection {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--color-accent-dim);
+}
+
 /* ───────────────────────────────────────────
    Custom Scrollbar
    ─────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -67,7 +79,6 @@ body,
   background: var(--color-text-muted);
 }
 
-/* Firefox */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--color-border-strong) transparent;
@@ -77,18 +88,17 @@ body,
    Markdown Prose (Assistant Messages)
    ─────────────────────────────────────────── */
 .prose-chat {
-  line-height: 1.7;
-  font-size: 0.9375rem;
+  line-height: 1.75;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
 }
 
 .prose-chat p {
   margin: 0.5em 0;
 }
-
 .prose-chat p:first-child {
   margin-top: 0;
 }
-
 .prose-chat p:last-child {
   margin-bottom: 0;
 }
@@ -103,8 +113,8 @@ body,
   color: var(--color-text-primary);
 }
 
-.prose-chat h1 { font-size: 1.25rem; }
-.prose-chat h2 { font-size: 1.125rem; }
+.prose-chat h1 { font-size: 1.2rem; }
+.prose-chat h2 { font-size: 1.1rem; }
 .prose-chat h3 { font-size: 1rem; }
 
 .prose-chat ul,
@@ -124,25 +134,25 @@ body,
 }
 
 .prose-chat blockquote {
-  border-left: 3px solid var(--color-accent);
+  border-left: 2px solid var(--color-accent);
   margin: 0.75em 0;
   padding: 0.25em 1em;
   color: var(--color-text-secondary);
   background: var(--color-accent-subtle);
-  border-radius: 0 6px 6px 0;
+  border-radius: 0 4px 4px 0;
 }
 
 .prose-chat code {
-  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
   font-size: 0.85em;
-  background: var(--color-surface-elevated);
+  background: var(--color-bg-subtle);
   padding: 0.15em 0.4em;
   border-radius: 4px;
   color: var(--color-accent-hover);
 }
 
 .prose-chat pre {
-  background: var(--color-bg) !important;
+  background: #F1F5F9 !important;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 1em;
@@ -153,15 +163,15 @@ body,
 .prose-chat pre code {
   background: none;
   padding: 0;
-  color: inherit;
-  font-size: 0.85em;
+  color: #1E293B;
+  font-size: 0.8em;
 }
 
 .prose-chat table {
   width: 100%;
   border-collapse: collapse;
   margin: 0.75em 0;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .prose-chat th,
@@ -203,7 +213,6 @@ body,
 .loading-dot {
   animation: loading-dots 1.4s ease-in-out infinite;
 }
-
 .loading-dot:nth-child(1) { animation-delay: 0s; }
 .loading-dot:nth-child(2) { animation-delay: 0.2s; }
 .loading-dot:nth-child(3) { animation-delay: 0.4s; }
@@ -234,4 +243,105 @@ body,
   color: var(--color-accent);
   animation: blink-cursor 1s step-end infinite;
   margin-left: 1px;
+}
+
+/* ───────────────────────────────────────────
+   Skeleton Shimmer
+   ─────────────────────────────────────────── */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-surface-elevated);
+  border-radius: 6px;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 0, 0, 0.03),
+    transparent
+  );
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* ───────────────────────────────────────────
+   Landing Page — Floating Orbs
+   ─────────────────────────────────────────── */
+@keyframes float-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -40px) scale(1.05); }
+  66% { transform: translate(-20px, 20px) scale(0.95); }
+}
+
+@keyframes float-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-40px, 30px) scale(1.1); }
+  66% { transform: translate(20px, -30px) scale(0.9); }
+}
+
+@keyframes float-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(25px, 35px) scale(1.05); }
+}
+
+.orb-1 {
+  animation: float-1 20s ease-in-out infinite;
+}
+.orb-2 {
+  animation: float-2 25s ease-in-out infinite;
+}
+.orb-3 {
+  animation: float-3 18s ease-in-out infinite;
+}
+
+/* ───────────────────────────────────────────
+   Landing Grid Background
+   ─────────────────────────────────────────── */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(99, 102, 241, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.02) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* ───────────────────────────────────────────
+   Gradient Text
+   ─────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #1E1B4B 0%, #4F46E5 50%, #7C3AED 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ───────────────────────────────────────────
+   Glow Effects
+   ─────────────────────────────────────────── */
+.glow-border {
+  position: relative;
+}
+.glow-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1), transparent 60%);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.glow-border:hover::before {
+  opacity: 1;
 }
