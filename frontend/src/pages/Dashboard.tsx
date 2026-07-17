@@ -27,10 +27,14 @@ export default function Dashboard() {
     isLoading: chatLoading,
     error: chatError,
     lastSources,
+    conversations,
+    currentConversationId,
     sendMessage,
     clearChat,
     regenerate,
     copyAnswer,
+    selectConversation,
+    removeConversation,
   } = useChat();
 
   const selectedDoc = documents.find(
@@ -61,7 +65,7 @@ export default function Dashboard() {
       <Header selectedDocumentName={selectedDocName} />
 
       <div className="flex flex-1 min-h-0">
-        {/* Left — Research Library */}
+        {/* Left — Research Library & Conversations */}
         <div className="w-64 shrink-0">
           <Sidebar
             documents={documents}
@@ -75,6 +79,11 @@ export default function Dashboard() {
             onSelect={selectDocument}
             onDelete={remove}
             onRetryFetch={fetchDocs}
+            
+            conversations={conversations}
+            currentConversationId={currentConversationId}
+            onSelectConversation={selectConversation}
+            onDeleteConversation={removeConversation}
           />
         </div>
 

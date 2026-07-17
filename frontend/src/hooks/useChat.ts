@@ -1,37 +1,87 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import type { ChatMessage, Source } from "../types/chat";
 import { sendChatMessage } from "../api/chat";
+import { fetchConversations, fetchConversationMessages, deleteConversation } from "../api/conversations";
+import type { Conversation } from "../api/conversations";
 import { copyToClipboard } from "../utils/copyToClipboard";
 import { startTypingAnimation } from "../utils/typing";
 
-const SESSION_KEY = "ai-research-session-id";
-
-function getSessionId(): string {
-  let id = localStorage.getItem(SESSION_KEY);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(SESSION_KEY, id);
-  }
-  return id;
-}
-
 export function useChat() {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastSources, setLastSources] = useState<Source[]>([]);
 
-  const sessionId = useRef(getSessionId());
   const abortControllerRef = useRef<AbortController | null>(null);
   const typingCancelRef = useRef<(() => void) | null>(null);
 
+  const loadConversations = useCallback(async () => {
+    try {
+      const list = await fetchConversations();
+      setConversations(list);
+    } catch (err) {
+      console.error("Failed to load conversations:", err);
+    }
+  }, []);
+
+  // Fetch list on mount
+  useEffect(() => {
+    loadConversations();
+  }, [loadConversations]);
+
+  const selectConversation = useCallback(async (id: number | null) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    if (typingCancelRef.current) {
+      typingCancelRef.current();
+    }
+    
+    setCurrentConversationId(id);
+    setLastSources([]);
+    setError(null);
+    setIsLoading(false);
+
+    if (id === null) {
+      setMessages([]);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const data = await fetchConversationMessages(id);
+      const mappedMessages: ChatMessage[] = data.messages.map((m, idx) => ({
+        id: `msg-${idx}`,
+        role: m.role,
+        content: m.content,
+      }));
+      setMessages(mappedMessages);
+    } catch {
+      setError("Failed to load messages.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const removeConversation = useCallback(async (id: number) => {
+    try {
+      await deleteConversation(id);
+      if (currentConversationId === id) {
+        selectConversation(null);
+      }
+      loadConversations();
+    } catch {
+      setError("Failed to delete conversation.");
+    }
+  }, [currentConversationId, selectConversation, loadConversations]);
+
   const sendMessage = useCallback(
     async (question: string, documentId?: string | null) => {
-      // Cancel any inflight request
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
-      // Cancel any ongoing typing animation
       if (typingCancelRef.current) {
         typingCancelRef.current();
       }
@@ -42,14 +92,12 @@ export function useChat() {
       setError(null);
       setIsLoading(true);
 
-      // Add user message
       const userMessage: ChatMessage = {
         id: crypto.randomUUID(),
         role: "user",
         content: question,
       };
 
-      // Add placeholder assistant message (typing state)
       const assistantId = crypto.randomUUID();
       const assistantPlaceholder: ChatMessage = {
         id: assistantId,
@@ -63,14 +111,18 @@ export function useChat() {
       try {
         const data = await sendChatMessage(
           question,
-          sessionId.current,
+          currentConversationId ? String(currentConversationId) : "",
           documentId,
           abortController.signal,
         );
 
         setLastSources(data.sources);
 
-        // Start typing animation for the answer
+        const newId = parseInt(data.session_id);
+        if (!currentConversationId && newId) {
+          setCurrentConversationId(newId);
+        }
+
         const cancel = startTypingAnimation(
           data.answer,
           (visibleText) => {
@@ -83,7 +135,6 @@ export function useChat() {
             );
           },
           () => {
-            // Animation complete — set final state
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === assistantId
@@ -97,53 +148,41 @@ export function useChat() {
               ),
             );
             setIsLoading(false);
+            loadConversations();
           },
         );
 
         typingCancelRef.current = cancel;
       } catch (err: unknown) {
-        // Don't treat abort as an error
         if (err instanceof Error && err.name === "CanceledError") return;
         if (err instanceof DOMException && err.name === "AbortError") return;
 
         setError("Chat failed. Please try again.");
-        // Remove the placeholder assistant message
         setMessages((prev) => prev.filter((msg) => msg.id !== assistantId));
         setIsLoading(false);
       }
     },
-    [],
+    [currentConversationId, loadConversations],
   );
 
   const clearChat = useCallback(() => {
-    // Cancel inflight
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    if (typingCancelRef.current) {
-      typingCancelRef.current();
-    }
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+    if (typingCancelRef.current) typingCancelRef.current();
     setMessages([]);
     setLastSources([]);
     setError(null);
     setIsLoading(false);
-
-    // Generate new session for fresh chat
-    const newId = crypto.randomUUID();
-    sessionId.current = newId;
-    localStorage.setItem(SESSION_KEY, newId);
+    setCurrentConversationId(null);
   }, []);
 
   const regenerate = useCallback(
     (documentId?: string | null) => {
-      // Find the last user message
       const lastUserMessage = [...messages]
         .reverse()
         .find((m) => m.role === "user");
 
       if (!lastUserMessage) return;
 
-      // Remove the last assistant message
       setMessages((prev) => {
         const lastAssistantIndex = prev.findLastIndex(
           (m) => m.role === "assistant",
@@ -152,7 +191,6 @@ export function useChat() {
         return prev.filter((_, i) => i !== lastAssistantIndex);
       });
 
-      // Re-send — but we need to remove the last user message too since sendMessage adds it
       setMessages((prev) => {
         const lastUserIndex = prev.findLastIndex((m) => m.role === "user");
         if (lastUserIndex === -1) return prev;
@@ -168,7 +206,6 @@ export function useChat() {
     const msg = messages.find((m) => m.id === messageId);
     if (!msg) return false;
     return copyToClipboard(msg.content);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages]);
 
   return {
@@ -176,9 +213,14 @@ export function useChat() {
     isLoading,
     error,
     lastSources,
+    conversations,
+    currentConversationId,
     sendMessage,
     clearChat,
     regenerate,
     copyAnswer,
+    selectConversation,
+    removeConversation,
+    loadConversations,
   };
 }

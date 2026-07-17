@@ -1,7 +1,9 @@
-import { Library, Plus } from "lucide-react";
+import { Library, Plus, MessageSquare, Trash2, LogOut } from "lucide-react";
 import UploadButton from "../Documents/UploadButton";
 import DocumentList from "../Documents/DocumentList";
 import type { Document } from "../../types/document";
+import type { Conversation } from "../../api/conversations";
+import { useAuth } from "../../context/AuthContext";
 
 interface SidebarProps {
   documents: Document[];
@@ -15,6 +17,12 @@ interface SidebarProps {
   onSelect: (id: string | null) => void;
   onDelete: (id: string) => void;
   onRetryFetch: () => void;
+  
+  // Conversations parameters
+  conversations: Conversation[];
+  currentConversationId: number | null;
+  onSelectConversation: (id: number | null) => void;
+  onDeleteConversation: (id: number) => void;
 }
 
 export default function Sidebar({
@@ -29,10 +37,17 @@ export default function Sidebar({
   onSelect,
   onDelete,
   onRetryFetch,
+  
+  conversations,
+  currentConversationId,
+  onSelectConversation,
+  onDeleteConversation,
 }: SidebarProps) {
+  const { user, logout } = useAuth();
+
   return (
-    <aside className="flex flex-col h-full bg-surface">
-      {/* Header */}
+    <aside className="flex flex-col h-full bg-surface border-r border-border">
+      {/* 1. Header & Document Library */}
       <div className="px-3 pt-3 pb-2">
         <div className="flex items-center justify-between mb-2.5">
           <h2 className="text-[11px] font-semibold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
@@ -66,7 +81,7 @@ export default function Sidebar({
       </button>
 
       {/* Document list */}
-      <div className="flex-1 overflow-y-auto px-2 pb-2 mt-1">
+      <div className="max-h-[30%] overflow-y-auto px-2 pb-2 mt-1 border-b border-border">
         <DocumentList
           documents={documents}
           isLoading={isLoading}
@@ -77,6 +92,81 @@ export default function Sidebar({
           onRetry={onRetryFetch}
         />
       </div>
+
+      {/* 2. Conversations History */}
+      <div className="flex-1 overflow-y-auto px-2 py-3 flex flex-col min-h-0">
+        <div className="flex items-center justify-between px-1 mb-2">
+          <h2 className="text-[11px] font-semibold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
+            <MessageSquare size={12} />
+            Conversations
+          </h2>
+          <button
+            onClick={() => onSelectConversation(null)}
+            className="text-[10px] text-accent hover:text-accent-hover font-medium flex items-center gap-0.5 cursor-pointer"
+            title="Start new chat"
+          >
+            <Plus size={10} />
+            New
+          </button>
+        </div>
+
+        {conversations.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-6 text-center text-text-faint">
+            <MessageSquare size={16} className="mb-1" />
+            <p className="text-[10px]">No chat history.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-0.5 min-h-0 overflow-y-auto">
+            {conversations.map((conv) => (
+              <div
+                key={conv.id}
+                onClick={() => onSelectConversation(conv.id)}
+                className={`group flex items-center justify-between px-2 py-1.5 rounded-md text-xs cursor-pointer transition-colors
+                  ${
+                    currentConversationId === conv.id
+                      ? "bg-accent-subtle text-accent font-medium"
+                      : "text-text-secondary hover:text-text-primary hover:bg-surface-hover"
+                  }`}
+              >
+                <span className="truncate flex-1 pr-2">{conv.title}</span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteConversation(conv.id);
+                  }}
+                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-text-muted hover:text-error transition-all cursor-pointer"
+                  title="Delete chat"
+                >
+                  <Trash2 size={11} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 3. User profile footer panel */}
+      {user && (
+        <div className="p-3 border-t border-border bg-surface-elevated/40 flex items-center gap-2 shrink-0">
+          <img
+            src={user.picture || "https://lh3.googleusercontent.com/a/default-user"}
+            alt={user.name}
+            referrerPolicy="no-referrer"
+            className="w-8 h-8 rounded-full border border-border object-cover"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold text-text-primary truncate">{user.name}</p>
+            <p className="text-[10px] text-text-muted truncate">{user.email}</p>
+          </div>
+          <button
+            onClick={logout}
+            className="p-1.5 rounded-md text-text-muted hover:text-error hover:bg-error-subtle transition-colors cursor-pointer shrink-0"
+            title="Log Out"
+          >
+            <LogOut size={13} />
+          </button>
+        </div>
+      )}
     </aside>
   );
 }
