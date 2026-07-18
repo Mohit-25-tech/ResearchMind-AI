@@ -45,11 +45,12 @@ def initialize_database():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 document_id TEXT UNIQUE NOT NULL,
                 filename TEXT NOT NULL,
-                file_hash TEXT UNIQUE NOT NULL,
+                file_hash TEXT NOT NULL,
                 pages INTEGER,
                 chunks INTEGER,
                 user_id INTEGER REFERENCES users(id),
-                uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(file_hash, user_id)
             );
         """)
     else:
