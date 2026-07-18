@@ -1,0 +1,15 @@
+.git
+.github
+.vscode
+.idea
+node_modules
+dist
+.venv
+__pycache__
+.pytest_cache
+*.pyc
+*.pyo
+.env
+uploads/
+database/
+chroma_db/

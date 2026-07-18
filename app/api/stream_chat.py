@@ -35,14 +35,20 @@ def stream_chat(
         )
         conversation_id = cursor.lastrowid
         conn.commit()
-    else:
-        cursor.execute(
-            "SELECT id FROM conversations WHERE id = ? AND user_id = ?",
-            (conversation_id, user_id)
-        )
-        if not cursor.fetchone():
-            conn.close()
-            raise HTTPException(status_code=403, detail="Not authorized to access this conversation")
+    # Generate title if this is the first turn
+    cursor.execute(
+        """
+        SELECT title, (SELECT COUNT(*) FROM messages WHERE conversation_id = ?) as msg_count 
+        FROM conversations WHERE id = ?
+        """,
+        (conversation_id, conversation_id)
+    )
+    conv_row = cursor.fetchone()
+    if conv_row and (conv_row["title"] == "New Chat" or conv_row["msg_count"] == 0):
+        from app.services.title_generator import generate_title_from_query
+        title = generate_title_from_query(question)
+        cursor.execute("UPDATE conversations SET title = ? WHERE id = ?", (title, conversation_id))
+        conn.commit()
 
     conn.close()
 

@@ -1,7 +1,7 @@
-from langchain_ollama import OllamaEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 
-embeddings = OllamaEmbeddings(
-    model="all-minilm:l6"
+embeddings = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-mpnet-base-v2"
 )
 
 def get_embedding_function():

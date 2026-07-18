@@ -41,10 +41,10 @@ export default function DocumentCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
       onClick={() => onSelect(document.document_id)}
-      className={`group relative rounded-md px-2.5 py-2 cursor-pointer transition-all duration-150
+      className={`group relative rounded-md px-2.5 py-2 cursor-pointer sidebar-transition
         ${
           isSelected
-            ? "bg-accent-subtle border-l-2 border-accent"
+            ? "bg-accent-subtle border-l-2 border-accent font-medium shadow-sm"
             : "hover:bg-surface-hover border-l-2 border-transparent"
         }`}
     >

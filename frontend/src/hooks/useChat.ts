@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { ChatMessage, Source } from "../types/chat";
 import { sendChatMessage } from "../api/chat";
-import { fetchConversations, fetchConversationMessages, deleteConversation } from "../api/conversations";
+import { fetchConversations, fetchConversationMessages, deleteConversation, renameConversation, clearConversations } from "../api/conversations";
 import type { Conversation } from "../api/conversations";
 import { copyToClipboard } from "../utils/copyToClipboard";
 import { startTypingAnimation } from "../utils/typing";
@@ -76,6 +76,28 @@ export function useChat() {
       setError("Failed to delete conversation.");
     }
   }, [currentConversationId, selectConversation, loadConversations]);
+
+  const editConversationTitle = useCallback(async (id: number, newTitle: string) => {
+    setConversations((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, title: newTitle } : c))
+    );
+    try {
+      await renameConversation(id, newTitle);
+      loadConversations();
+    } catch {
+      setError("Failed to rename conversation.");
+    }
+  }, [loadConversations]);
+
+  const clearAllConversationsHistory = useCallback(async () => {
+    try {
+      await clearConversations();
+      selectConversation(null);
+      await loadConversations();
+    } catch {
+      setError("Failed to clear conversations history.");
+    }
+  }, [selectConversation, loadConversations]);
 
   const sendMessage = useCallback(
     async (question: string, documentId?: string | null) => {
@@ -222,5 +244,7 @@ export function useChat() {
     selectConversation,
     removeConversation,
     loadConversations,
+    editConversationTitle,
+    clearAllConversationsHistory,
   };
 }

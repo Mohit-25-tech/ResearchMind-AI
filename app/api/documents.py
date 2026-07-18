@@ -24,6 +24,43 @@ def get_document_by_id(document_id: str, current_user: dict = Depends(get_curren
         )
     return document
 
+from fastapi.responses import FileResponse
+import os
+
+@documents_router.get("/documents/{document_id}/download")
+def download_document(document_id: str, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    document = get_document(document_id)
+    if document is None or document.get("user_id") != user_id:
+        raise HTTPException(
+            status_code=404,
+            detail="Document not found."
+        )
+    file_path = f"uploads/{user_id}/{document_id}.pdf"
+    if not os.path.exists(file_path):
+        raise HTTPException(
+            status_code=404,
+            detail="PDF file not found on disk."
+        )
+    return FileResponse(
+        path=file_path,
+        media_type="application/pdf",
+        filename=document["filename"]
+    )
+
+@documents_router.delete("/documents")
+def clear_all_documents(current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    documents = get_all_documents(user_id)
+    
+    for doc in documents:
+        document_id = doc["document_id"]
+        delete_document_vectors(document_id)
+        delete_uploaded_pdf(user_id, document_id)
+        delete_document_record(document_id)
+        
+    return {"message": "All documents cleared successfully."}
+
 @documents_router.delete("/documents/{document_id}")
 def remove_document(document_id: str, current_user: dict = Depends(get_current_user)):
     user_id = current_user["id"]

@@ -22,6 +22,16 @@ def list_conversations(current_user: dict = Depends(get_current_user)):
     conn.close()
     return {"conversations": [dict(row) for row in rows]}
 
+@conversations_router.delete("")
+def clear_all_conversations(current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM conversations WHERE user_id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+    return {"message": "All conversations cleared successfully"}
+
 @conversations_router.get("/{conversation_id}")
 def get_conversation_messages(conversation_id: int, current_user: dict = Depends(get_current_user)):
     user_id = current_user["id"]
@@ -71,3 +81,36 @@ def delete_conversation(conversation_id: int, current_user: dict = Depends(get_c
     conn.commit()
     conn.close()
     return {"message": "Conversation deleted successfully"}
+
+from pydantic import BaseModel
+
+class RenameRequest(BaseModel):
+    title: str
+
+@conversations_router.patch("/{conversation_id}")
+def rename_conversation(
+    conversation_id: int, 
+    request: RenameRequest, 
+    current_user: dict = Depends(get_current_user)
+):
+    user_id = current_user["id"]
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    # Verify ownership
+    cursor.execute(
+        "SELECT id FROM conversations WHERE id = ? AND user_id = ?",
+        (conversation_id, user_id)
+    )
+    conv = cursor.fetchone()
+    if not conv:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Conversation not found")
+        
+    cursor.execute(
+        "UPDATE conversations SET title = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        (request.title, conversation_id)
+    )
+    conn.commit()
+    conn.close()
+    return {"message": "Conversation renamed successfully"}

@@ -28,3 +28,11 @@ export async function fetchConversationMessages(id: number): Promise<Conversatio
 export async function deleteConversation(id: number): Promise<void> {
   await api.delete(`/conversations/${id}`);
 }
+
+export async function renameConversation(id: number, title: string): Promise<void> {
+  await api.patch(`/conversations/${id}`, { title });
+}
+
+export async function clearConversations(): Promise<void> {
+  await api.delete("/conversations");
+}

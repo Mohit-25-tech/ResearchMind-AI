@@ -20,6 +20,7 @@ export default function Dashboard() {
     isUploading,
     uploadProgress,
     uploadError,
+    clearAllDocs,
   } = useDocuments();
 
   const {
@@ -35,6 +36,8 @@ export default function Dashboard() {
     copyAnswer,
     selectConversation,
     removeConversation,
+    editConversationTitle,
+    clearAllConversationsHistory,
   } = useChat();
 
   const selectedDoc = documents.find(
@@ -84,6 +87,9 @@ export default function Dashboard() {
             currentConversationId={currentConversationId}
             onSelectConversation={selectConversation}
             onDeleteConversation={removeConversation}
+            onRenameConversation={editConversationTitle}
+            onClearAllDocuments={clearAllDocs}
+            onClearAllConversations={clearAllConversationsHistory}
           />
         </div>
 
@@ -97,6 +103,10 @@ export default function Dashboard() {
             onRegenerate={handleRegenerate}
             onClearChat={clearChat}
             onSendExample={handleSendExample}
+            documents={documents}
+            hasConversations={conversations.length > 0}
+            onUpload={upload}
+            onSelectDocument={selectDocument}
           />
           <ChatInput
             isLoading={chatLoading}

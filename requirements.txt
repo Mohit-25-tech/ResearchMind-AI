@@ -81,3 +81,9 @@ mypy
 langchain_ollama
 langchain_chroma
 python-multipart
+langchain-jina
+
+langchain-huggingface
+sentence-transformers
+transformers
+torch

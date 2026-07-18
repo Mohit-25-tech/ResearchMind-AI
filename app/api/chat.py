@@ -65,10 +65,8 @@ def chat(
     conv_row = cursor.fetchone()
     
     if conv_row and (conv_row["title"] == "New Chat" or conv_row["msg_count"] <= 2):
-        words = question.split()
-        title = " ".join(words[:4])
-        if len(title) > 30:
-            title = title[:27] + "..."
+        from app.services.title_generator import generate_title_from_query
+        title = generate_title_from_query(question)
         cursor.execute("UPDATE conversations SET title = ? WHERE id = ?", (title, conversation_id))
         conn.commit()
     

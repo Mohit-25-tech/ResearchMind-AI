@@ -43,3 +43,7 @@ export async function deleteDocument(documentId: string): Promise<DeleteResponse
   const response = await api.delete<DeleteResponse>(`/documents/${documentId}`);
   return response.data;
 }
+
+export async function clearAllDocuments(): Promise<void> {
+  await api.delete("/documents");
+}
