@@ -20,6 +20,7 @@ export default function Dashboard() {
     isUploading,
     uploadProgress,
     uploadError,
+    clearAllDocs,
   } = useDocuments();
 
   const {
@@ -27,10 +28,16 @@ export default function Dashboard() {
     isLoading: chatLoading,
     error: chatError,
     lastSources,
+    conversations,
+    currentConversationId,
     sendMessage,
     clearChat,
     regenerate,
     copyAnswer,
+    selectConversation,
+    removeConversation,
+    editConversationTitle,
+    clearAllConversationsHistory,
   } = useChat();
 
   const selectedDoc = documents.find(
@@ -61,7 +68,7 @@ export default function Dashboard() {
       <Header selectedDocumentName={selectedDocName} />
 
       <div className="flex flex-1 min-h-0">
-        {/* Left — Research Library */}
+        {/* Left — Research Library & Conversations */}
         <div className="w-64 shrink-0">
           <Sidebar
             documents={documents}
@@ -75,6 +82,14 @@ export default function Dashboard() {
             onSelect={selectDocument}
             onDelete={remove}
             onRetryFetch={fetchDocs}
+            
+            conversations={conversations}
+            currentConversationId={currentConversationId}
+            onSelectConversation={selectConversation}
+            onDeleteConversation={removeConversation}
+            onRenameConversation={editConversationTitle}
+            onClearAllDocuments={clearAllDocs}
+            onClearAllConversations={clearAllConversationsHistory}
           />
         </div>
 
@@ -88,6 +103,10 @@ export default function Dashboard() {
             onRegenerate={handleRegenerate}
             onClearChat={clearChat}
             onSendExample={handleSendExample}
+            documents={documents}
+            hasConversations={conversations.length > 0}
+            onUpload={upload}
+            onSelectDocument={selectDocument}
           />
           <ChatInput
             isLoading={chatLoading}

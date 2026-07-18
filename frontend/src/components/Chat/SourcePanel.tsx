@@ -1,11 +1,32 @@
-import { FileText, BookOpen } from "lucide-react";
+import { FileText, BookOpen, Download } from "lucide-react";
 import type { Source } from "../../types/chat";
+import api from "../../api/api";
 
 interface SourcePanelProps {
   sources: Source[];
 }
 
 export default function SourcePanel({ sources }: SourcePanelProps) {
+  async function handleDownload(documentId: string, filename: string) {
+    try {
+      const response = await api.get(`/documents/${documentId}/download`, {
+        responseType: "blob",
+      });
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to download PDF:", err);
+      alert("Failed to download PDF.");
+    }
+  }
+
   return (
     <aside className="flex flex-col h-full bg-surface">
       {/* Header */}
@@ -34,15 +55,24 @@ export default function SourcePanel({ sources }: SourcePanelProps) {
                 key={`${source.document_id}-${idx}`}
                 className="rounded-lg border border-border bg-surface-elevated/50 p-3"
               >
-                {/* Filename */}
-                <div className="flex items-start gap-1.5 mb-2">
-                  <FileText size={12} className="text-accent mt-0.5 shrink-0" />
-                  <p
-                    className="text-xs font-medium text-text-primary truncate"
-                    title={source.filename}
+                {/* Filename & Download */}
+                <div className="flex items-start justify-between gap-1.5 mb-2">
+                  <div className="flex items-start gap-1.5 truncate">
+                    <FileText size={12} className="text-accent mt-0.5 shrink-0" />
+                    <p
+                      className="text-xs font-medium text-text-primary truncate"
+                      title={source.filename}
+                    >
+                      {source.filename}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleDownload(source.document_id, source.filename)}
+                    className="p-1 rounded hover:bg-surface-hover text-text-muted hover:text-accent transition-colors cursor-pointer shrink-0"
+                    title="Download PDF"
                   >
-                    {source.filename}
-                  </p>
+                    <Download size={11} />
+                  </button>
                 </div>
 
                 {/* Page badges */}

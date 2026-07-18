@@ -1,5 +1,8 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { GoogleLogin } from "@react-oauth/google";
+import { useAuth } from "../context/AuthContext";
 import {
   BrainCircuit,
   MessageSquare,
@@ -78,6 +81,21 @@ const TECH = [
 /* ─── Component ───────────────────────────── */
 export default function Landing() {
   const navigate = useNavigate();
+  const { login, isAuthenticated, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-bg">
+        <span className="w-1.5 h-1.5 rounded-full bg-accent animate-ping" />
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -148,16 +166,33 @@ export default function Landing() {
 
             {/* Buttons */}
             <motion.div variants={fadeUp} custom={3} className="flex items-center justify-center gap-3">
-              <button
-                onClick={() => navigate("/dashboard")}
-                className="group flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium
-                           bg-accent text-white hover:bg-accent-hover transition-all cursor-pointer
-                           shadow-[0_0_20px_rgba(99,102,241,0.15)]
-                           hover:shadow-[0_0_30px_rgba(99,102,241,0.25)]"
-              >
-                Get Started
-                <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
-              </button>
+              {!isAuthenticated ? (
+                <div className="shadow-lg hover:shadow-xl transition-all rounded-lg overflow-hidden">
+                  <GoogleLogin
+                    onSuccess={(credentialResponse) => {
+                      if (credentialResponse.credential) {
+                        login(credentialResponse.credential);
+                      }
+                    }}
+                    onError={() => {
+                      console.log("Login Failed");
+                    }}
+                    theme="outline"
+                    shape="pill"
+                  />
+                </div>
+              ) : (
+                <button
+                  onClick={() => navigate("/dashboard")}
+                  className="group flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium
+                             bg-accent text-white hover:bg-accent-hover transition-all cursor-pointer
+                             shadow-[0_0_20px_rgba(99,102,241,0.15)]
+                             hover:shadow-[0_0_30px_rgba(99,102,241,0.25)]"
+                >
+                  Go to Dashboard
+                  <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              )}
             </motion.div>
           </motion.div>
         </div>

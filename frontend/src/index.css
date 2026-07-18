@@ -345,3 +345,30 @@ body,
 .glow-border:hover::before {
   opacity: 1;
 }
+
+/* ───────────────────────────────────────────
+   Premium Micro-interactions
+   ─────────────────────────────────────────── */
+.sidebar-transition {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.sidebar-transition:hover {
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.premium-btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.premium-btn:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+  filter: brightness(1.05);
+}
+.premium-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.premium-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

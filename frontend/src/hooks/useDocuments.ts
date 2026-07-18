@@ -4,6 +4,7 @@ import {
   fetchDocuments,
   uploadDocument,
   deleteDocument,
+  clearAllDocuments,
 } from "../api/documents";
 
 const SELECTED_DOC_KEY = "ai-research-selected-document";
@@ -62,7 +63,6 @@ export function useDocuments() {
         await uploadDocument(file, (percent) => {
           setUploadProgress(percent);
         });
-        // Refresh document list after successful upload
         await fetchDocs();
       } catch {
         setUploadError("Upload failed. Please try again.");
@@ -78,11 +78,9 @@ export function useDocuments() {
     async (id: string) => {
       try {
         await deleteDocument(id);
-        // If the deleted doc was selected, clear selection
         if (selectedDocumentId === id) {
           clearSelection();
         }
-        // Refresh document list
         await fetchDocs();
       } catch {
         setError("Failed to delete document. Please try again.");
@@ -90,6 +88,16 @@ export function useDocuments() {
     },
     [fetchDocs, selectedDocumentId, clearSelection],
   );
+
+  const clearAllDocs = useCallback(async () => {
+    try {
+      await clearAllDocuments();
+      clearSelection();
+      await fetchDocs();
+    } catch {
+      setError("Failed to clear documents. Please try again.");
+    }
+  }, [fetchDocs, clearSelection]);
 
   return {
     documents,
@@ -104,5 +112,6 @@ export function useDocuments() {
     isUploading,
     uploadProgress,
     uploadError,
+    clearAllDocs,
   };
 }

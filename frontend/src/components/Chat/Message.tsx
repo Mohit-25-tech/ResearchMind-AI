@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { BrainCircuit, User, Copy, Check, RefreshCw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -33,7 +34,11 @@ export default function Message({
   // Thinking state
   if (isAssistant && message.isTyping && message.content === "") {
     return (
-      <div className="flex gap-3 px-5 py-3">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex gap-3 px-5 py-3"
+      >
         <div className="flex items-center justify-center w-6 h-6 rounded-md bg-accent-subtle shrink-0 mt-0.5">
           <BrainCircuit size={12} className="text-accent" />
         </div>
@@ -45,12 +50,17 @@ export default function Message({
             <span className="w-1 h-1 rounded-full bg-text-muted loading-dot" />
           </span>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className={`flex gap-3 px-5 py-3 ${isUser ? "flex-row-reverse" : ""}`}>
+    <motion.div
+      initial={{ opacity: 0, x: isUser ? 16 : 0, y: isAssistant ? 12 : 0 }}
+      animate={{ opacity: 1, x: 0, y: 0 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+      className={`flex gap-3 px-5 py-3 ${isUser ? "flex-row-reverse" : ""}`}
+    >
       {/* Avatar */}
       <div
         className={`flex items-center justify-center w-6 h-6 rounded-md shrink-0 mt-0.5 ${
@@ -125,6 +135,6 @@ export default function Message({
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

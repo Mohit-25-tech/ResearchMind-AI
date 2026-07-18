@@ -1,100 +1,79 @@
 from app.services.database import get_connection
 
-
 def save_conversation(
-    session_id: str,
+    conversation_id: int,
     question: str,
     answer: str,
 ):
     """
-    Save one conversation turn.
+    Save one conversation turn to the messages table and update conversation time.
     """
-
     conn = get_connection()
-
     cursor = conn.cursor()
-
+    
     cursor.execute(
-        """
-        INSERT INTO conversations
-        (
-            session_id,
-            question,
-            answer
-        )
-
-        VALUES (?, ?, ?)
-        """,
-        (
-            session_id,
-            question,
-            answer,
-        ),
+        "INSERT INTO messages (conversation_id, role, content) VALUES (?, 'user', ?)",
+        (conversation_id, question)
     )
-
+    cursor.execute(
+        "INSERT INTO messages (conversation_id, role, content) VALUES (?, 'assistant', ?)",
+        (conversation_id, answer)
+    )
+    cursor.execute(
+        "UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        (conversation_id,)
+    )
+    
     conn.commit()
-
     conn.close()
 
 def get_conversation_history(
-    session_id: str,
+    conversation_id: int,
     limit: int = 5,
 ):
     """
-    Get the most recent conversation history.
+    Get the most recent conversation history as dictionary pairs.
     """
-
     conn = get_connection()
-
     cursor = conn.cursor()
-
+    
     cursor.execute(
         """
-        SELECT
-            question,
-            answer
-
-        FROM conversations
-
-        WHERE session_id = ?
-
+        SELECT role, content
+        FROM messages
+        WHERE conversation_id = ?
         ORDER BY id DESC
-
         LIMIT ?
         """,
-        (
-            session_id,
-            limit,
-        ),
+        (conversation_id, limit * 2)
     )
-
     rows = cursor.fetchall()
-
     conn.close()
-
+    
     rows.reverse()
-
-    return rows
+    
+    history = []
+    i = 0
+    while i < len(rows):
+        if i + 1 < len(rows) and rows[i]["role"] == "user" and rows[i+1]["role"] == "assistant":
+            history.append({
+                "question": rows[i]["content"],
+                "answer": rows[i+1]["content"]
+            })
+            i += 2
+        else:
+            i += 1
+            
+    return history
 
 def delete_conversation(
-    session_id: str,
+    conversation_id: int,
 ):
     """
-    Delete an entire chat session.
+    Delete an entire conversation.
     """
-
     conn = get_connection()
-
     cursor = conn.cursor()
-
-    cursor.execute(
-        """
-        DELETE FROM conversations
-        WHERE session_id = ?
-        """,
-        (session_id,),
-    )
-
+    cursor.execute("DELETE FROM conversations WHERE id = ?", (conversation_id,))
     conn.commit()
-
     conn.close()

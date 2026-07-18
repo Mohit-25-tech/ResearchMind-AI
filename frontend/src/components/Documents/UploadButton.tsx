@@ -44,7 +44,7 @@ export default function UploadButton({
         onClick={handleClick}
         disabled={isUploading}
         className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-md
-                   text-xs font-medium transition-all cursor-pointer
+                   text-xs font-medium cursor-pointer premium-btn
                    border border-border hover:border-border-strong
                    bg-surface-elevated text-text-secondary hover:text-text-primary
                    disabled:opacity-40 disabled:cursor-not-allowed"
