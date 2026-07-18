@@ -1,89 +1,45 @@
-# ============================
+# ==========================================
 # Core Backend
-# ============================
+# ==========================================
 fastapi
 uvicorn[standard]
 python-dotenv
 pydantic
-pydantic-settings
+python-multipart
 
-# ============================
+# ==========================================
 # LangChain Ecosystem
-# ============================
+# ==========================================
 langchain
 langchain-core
 langchain-community
 langchain-google-genai
-langchain-openai
-langgraph
-langsmith
 langchain-groq
+langchain-chroma
 
-# ============================
+# ==========================================
 # Vector Database
-# ============================
+# ==========================================
 chromadb
-faiss-cpu
 
-# ============================
-# Embeddings / Tokenization
-# ============================
-tiktoken
-
-# ============================
-# Document Loaders
-# ============================
+# ==========================================
+# Document Processing
+# ==========================================
 pypdf
 pymupdf
-unstructured
-beautifulsoup4
-lxml
 
-# ============================
-# Search Tools
-# ============================
-duckduckgo-search
-wikipedia
-arxiv
+# ==========================================
+# Authentication
+# ==========================================
+PyJWT
+google-auth
 
-# ============================
-# Database
-# ============================
-sqlalchemy
-psycopg[binary]
-alembic
-
-# ============================
+# ==========================================
 # Utilities
-# ============================
+# ==========================================
 httpx
-orjson
-tenacity
 aiofiles
-
-# ============================
-# Logging
-# ============================
-loguru
-
-# ============================
-# Testing
-# ============================
-pytest
-pytest-asyncio
-
-# ============================
-# Code Quality
-# ============================
-black
-ruff
-mypy
-langchain_ollama
-langchain_chroma
-python-multipart
-langchain-jina
-
+tenacity
+orjson
 langchain-huggingface
 sentence-transformers
-transformers
-torch
