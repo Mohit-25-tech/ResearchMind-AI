@@ -41,5 +41,3 @@ httpx
 aiofiles
 tenacity
 orjson
-langchain-huggingface
-sentence-transformers

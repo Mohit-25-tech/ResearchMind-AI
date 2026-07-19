@@ -1,6 +1,6 @@
 from pathlib import Path
 from uuid import uuid4
-from fastapi import APIRouter, File, UploadFile, Depends
+from fastapi import APIRouter, File, UploadFile, Depends, HTTPException
 from app.auth.dependencies import get_current_user
 from app.rag.loader import load_pdf
 from app.rag.splitter import split_documents
@@ -88,4 +88,6 @@ async def upload_pdf(
     except Exception as e:
         if temp_path.exists():
             temp_path.unlink()
+        if 'file_path' in locals() and file_path.exists():
+            file_path.unlink()
         raise e

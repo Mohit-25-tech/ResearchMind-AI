@@ -1,8 +1,8 @@
-from langchain_huggingface import HuggingFaceEmbeddings
-
-embeddings = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-mpnet-base-v2"
-)
+import os
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 def get_embedding_function():
-    return embeddings
+    return GoogleGenerativeAIEmbeddings(
+        model="models/gemini-embedding-001",
+        google_api_key=os.getenv("GOOGLE_API_KEY"),
+    )

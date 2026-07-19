@@ -17,7 +17,8 @@ def get_vector_store():
 def create_vector_store(chunks):
     vector_store = get_vector_store()
 
-    vector_store.add_documents(chunks)
+    if chunks:
+        vector_store.add_documents(chunks)
 
     return vector_store
 

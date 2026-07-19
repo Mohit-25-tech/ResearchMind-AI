@@ -1,3 +1,9 @@
+import sys
+from pathlib import Path
+
+# Ensure project root is in python path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from fastapi import FastAPI
 from app.api.chat import chat_router
 from app.api.upload import upload_router
@@ -18,3 +24,10 @@ app.include_router(chat_router)
 app.include_router(upload_router)
 app.include_router(documents_router)
 app.include_router(stream_router)
+
+
+if __name__ == "__main__":
+    import uvicorn
+    import os
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)
