@@ -8,7 +8,7 @@ class GoogleEmbeddings:
     Custom embedding class for Google Gemini.
     Switches between multiple API keys if one fails.
     """
-    def __init__(self, api_keys: List[str], model: str = "models/gemini-embedding-001"):
+    def __init__(self, api_keys: List[str], model: str = "gemini-embedding-1"):
         self.api_keys = api_keys
         self.current_key_index = 0
         self.model = model
