@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+from fastapi.middleware.cors import CORSMiddleware
 
 # Ensure project root is in python path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -17,6 +18,19 @@ app = FastAPI()
 
 # Run database setup and migrations
 initialize_database()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://research-mind-ai-dun.vercel.app",
+        "https://research-mind-ai-git-main-mohit-25-techs-projects.vercel.app",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(auth_router)
 app.include_router(conversations_router)
