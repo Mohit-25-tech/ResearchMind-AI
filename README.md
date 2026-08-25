@@ -15,7 +15,7 @@ ResearchMind AI is an end-to-end, enterprise-grade AI research assistant designe
 
 ### 🌐 Live Demo
 * **Frontend Web App (Vercel):** [https://research-mind-ai-git-main-mohit-25-techs-projects.vercel.app](https://research-mind-ai-git-main-mohit-25-techs-projects.vercel.app)
-* **Backend API Gateway (Render):** [https://researchmind-ai-2-nyd0.onrender.com](https://researchmind-ai-2-nyd0.onrender.com)
+
 
 ---
 
