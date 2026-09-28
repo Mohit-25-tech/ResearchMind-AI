@@ -5,6 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 # Ensure project root is in python path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI
 from app.api.chat import chat_router
 from app.api.upload import upload_router

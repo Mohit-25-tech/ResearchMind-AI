@@ -16,6 +16,7 @@ langchain-community
 langchain-google-genai
 langchain-groq
 langchain-chroma
+langchain-ollama
 
 # ==========================================
 # Vector Database

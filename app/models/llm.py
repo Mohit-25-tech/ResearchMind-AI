@@ -4,4 +4,4 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-model = ChatGroq(model_name="llama-3.1-8b-instant")
+model = ChatGroq(model_name="openai/gpt-oss-20b")

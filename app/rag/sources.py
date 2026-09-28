@@ -27,7 +27,7 @@ def extract_sources(documents):
 
     for source in grouped.values():
 
-        source["pages"] = sorted(list(source["pages"]))
+        source["pages"] = sorted([p for p in source["pages"] if p is not None])
 
         sources.append(source)
 

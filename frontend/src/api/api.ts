@@ -15,22 +15,36 @@ api.interceptors.request.use((config) => {
 });
 
 /**
- * Retry interceptor: automatically retries GET requests once on failure.
- * Uploads (POST) and deletes are never auto-retried.
+ * Response interceptor:
+ * 1. Handles 401 by clearing invalid/expired session tokens.
+ * 2. Automatically retries GET requests once on failure.
  */
-api.interceptors.response.use(undefined, async (error) => {
-  const config = error.config;
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const config = error.config;
 
-  if (
-    config &&
-    config.method === "get" &&
-    !config._retried
-  ) {
-    config._retried = true;
-    return api.request(config);
+    if (error.response?.status === 401) {
+      tokenStore.removeToken();
+      localStorage.removeItem("ai_research_user");
+      // If on a protected route, redirect to home/login
+      if (window.location.pathname !== "/") {
+        window.location.href = "/";
+      }
+      return Promise.reject(error);
+    }
+
+    if (
+      config &&
+      config.method === "get" &&
+      !config._retried
+    ) {
+      config._retried = true;
+      return api.request(config);
+    }
+
+    return Promise.reject(error);
   }
-
-  return Promise.reject(error);
-});
+);
 
 export default api;
