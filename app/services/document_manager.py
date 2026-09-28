@@ -83,6 +83,12 @@ def insert_document(
     conn.commit()
     conn.close()
 
+    try:
+        from app.rag.hybrid_retriever import invalidate_bm25_cache
+        invalidate_bm25_cache(user_id)
+    except Exception:
+        pass
+
 def get_all_documents(user_id: int):
     """
     Returns every uploaded document belonging to the user.
@@ -140,6 +146,10 @@ def delete_document_record(document_id: str):
     """
     conn = get_connection()
     cursor = conn.cursor()
+    cursor.execute("SELECT user_id FROM documents WHERE document_id = ?", (document_id,))
+    row = cursor.fetchone()
+    user_id = row[0] if row else None
+
     cursor.execute(
         """
         DELETE FROM documents
@@ -150,4 +160,12 @@ def delete_document_record(document_id: str):
     conn.commit()
     deleted = cursor.rowcount
     conn.close()
+
+    if deleted and user_id is not None:
+        try:
+            from app.rag.hybrid_retriever import invalidate_bm25_cache
+            invalidate_bm25_cache(user_id)
+        except Exception:
+            pass
+
     return deleted > 0

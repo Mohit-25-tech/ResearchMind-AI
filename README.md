@@ -25,31 +25,64 @@ ResearchMind AI is an end-to-end, enterprise-grade AI research assistant designe
 * 📄 **Automated PDF Processing** — Intelligent ingestion pipelines that handle parsing, clean text chunking, and metadata generation.
 * ⚡ **High-Speed Cloud Embeddings** — Integrated with Google Gemini Embeddings (`text-embedding-004`) for high-fidelity semantic parsing without local RAM constraints.
 * 📦 **Vector Database & Hybrid Search** — Uses ChromaDB for low-latency similarity queries across thousands of research passages.
-* 💬 **Smart Suggested Questions** — Automatically presents context-relevant suggested prompts when documents are selected.
-* 📈 **Contextual Source Citations** — Every generated answer includes exact references to retrieved document fragments and page numbers.
+* 📚 **Multi-Document Scoping & Comparative Analysis** — Select and toggle multiple uploaded papers simultaneously using checkbox controls to scope retrieval (`document_ids`). Compare findings, methodologies, and datasets across multiple research documents with dedicated query decomposition.
+* 💬 **Smart Document Scope Pills** — Clear visual pill bar above the chat input indicating currently scoped files with individual removal buttons and a "Clear scope" link. Scoped documents automatically persist per conversation thread.
+* 📈 **Contextual Source Citations** — Every generated answer includes exact references to retrieved document fragments, page numbers, or external Wikipedia / arXiv URLs.
 * ✏️ **Premium Conversation Workspace** — Smooth title generation, inline renaming, and clean, relative date-grouped threads.
 * ⚙️ **Administrative Footers** — Global controls to quickly clear conversation histories or purge documents, resetting the vector collections cleanly.
-
----
-
-## 🏗️ Architecture & Processing Workflow
-
 ### System Architecture
 ```
 ┌─────────────────┐        Google Token        ┌──────────────────┐
 │  React Frontend  ├──────────────────────────>│  FastAPI Backend │
 └────────┬────────┘                            └────────┬─────────┘
          │                                              │
-         │ Fetch Details / Chat Query                   │ Invoke Chain
+         │ Fetch Details / Chat Query                   │ Invoke Agent / Chain
          ▼                                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                       LangChain Pipeline                        │
+│                    Hybrid & Agentic Pipeline                    │
 │                                                                 │
 │   ┌───────────────┐     ┌──────────────┐     ┌──────────────┐   │
-│   │   ChromaDB    │<────┤  Gemini Embed│     │   Groq LLM   │   │
-│   │ (Vector Store)│     │(text-embed)  │     │(llama3-8b)   │   │
+│   │   ChromaDB    │<────┤ Ollama Embed │     │   Groq LLM   │   │
+│   │ (Vector Store)│     │(all-minilm)  │     │  (Qwen/Llama)│   │
 │   └───────┬───────┘     └──────────────┘     └──────┬───────┘   │
 │           │                                         │           │
+│           └─> BM25 + Dense ─> RRF ─> BGE Reranker ──┘           │
+└─────────────────────────────────────────────────────────────────┘
+                                                              │
+                                                              ▼
+                                                        [Final Answer]
+```
+
+### 🤖 LangGraph Agentic Workflow Diagram
+```mermaid
+flowchart TD
+    START([Start]) --> route_query{Router: Classify Query}
+    
+    route_query -->|"direct"| generate_direct[Generate Direct / Chit-Chat] --> END_NODE([End])
+    route_query -->|"arxiv"| arxiv_tool[arXiv Tool] --> generate[Generate Answer]
+    route_query -->|"wikipedia"| wiki_tool[Wikipedia Tool] --> generate
+    route_query -->|"pdf_rag"| decompose[Decompose Query into Sub-queries]
+    
+    decompose --> retrieve[Hybrid Retrieve: BM25 + Dense + RRF + BGE Reranker]
+    retrieve --> grade[Grade Retrieved Documents]
+    
+    grade -->|"Relevant (yes)"| generate
+    grade -->|"Not Relevant & rewrite < 2"| rewrite[Rewrite Query] --> retrieve
+    grade -->|"Not Relevant & rewrite >= 2"| fallback[Fallback: External Research Tools]
+    fallback --> generate
+    
+    generate --> grounding[Grounding Check: Anti-Hallucination Audit]
+    grounding -->|"Grounded (yes)"| END_NODE
+    grounding -->|"Not Grounded & regen < 1"| regen_prompt[Regenerate with Caveats/Filter] --> generate
+    grounding -->|"Not Grounded & regen >= 1"| caveat[Append Grounding Caveat] --> END_NODE
+```
+
+### PDF Ingestion & Query Lifecycle
+```
+[User Uploads PDF] ──> [PDF Parsing] ──> [Text Chunking] ──> [Ollama Embeddings] ──> [ChromaDB Index]
+                                                                                            │
+[Streaming Answer + Citations] <── [Agent Verification] <── [Hybrid Fusion & Rerank] <──────┘
+``` │
 │           └────────────────> Retriever ─────────────┘           │
 └─────────────────────────────────────────────────────────────────┘
                                                               │
@@ -96,26 +129,34 @@ ResearchMind AI is an end-to-end, enterprise-grade AI research assistant designe
 | `POST` | `/auth/google` | Verifies Google credentials, auto-registers users, and issues JWT tokens. | No |
 | `GET` | `/conversations` | Lists all active conversation threads for the logged-in user. | Yes |
 | `PATCH` | `/conversations/{id}` | Renames a specific conversation title. | Yes |
+| `PATCH` | `/conversations/{id}/documents` | Updates the active scoped document IDs for a conversation thread. | Yes |
 | `DELETE` | `/conversations` | Purges all conversation history logs for the active user. | Yes |
 | `POST` | `/upload` | Receives and chunks PDF documents, generating vector indexes. | Yes |
 | `GET` | `/documents` | Lists all uploaded research documents for the user. | Yes |
 | `DELETE` | `/documents` | Completely purges the user's document database and ChromaDB vectors. | Yes |
-| `POST` | `/chat` | Processes queries synchronously returning context-aware answers. | Yes |
-| `POST` | `/stream-chat` | Streams LLM response chunks in real-time. | Yes |
+| `POST` | `/chat` | Processes queries (supports multi-document `document_ids`), returning context-aware answers. | Yes |
+| `POST` | `/stream-chat` | Streams LLM response chunks in real-time with document scoping. | Yes |
 
 ---
 
 ## ⚙️ Environment Variables Setup
 
 ### Backend Environment Variables (`.env`)
-| Variable | Description |
-|:---|:---|
-| `GOOGLE_API_KEY` | Developer Google Cloud API Key (for Gemini Embeddings). |
-| `GROQ_API_KEY` | Groq Console API Key (for Llama model inferencing). |
-| `GOOGLE_CLIENT_ID` | Google Console client ID. |
-| `JWT_SECRET` | Secret hash signature for signing session tokens. |
-| `DATABASE_PATH` | Storage location path for SQLite. |
-| `CHROMA_DB_PATH` | Directory for vector index files. |
+| Variable | Description | Default |
+|:---|:---|:---|
+| `GROQ_API_KEY` | Groq Console API Key (for LLM inferencing). | Required |
+| `GOOGLE_API_KEY` | Developer Google Cloud API Key. | Optional |
+| `GOOGLE_CLIENT_ID` | Google Console client ID. | Required |
+| `JWT_SECRET` | Secret hash signature for signing session tokens. | Required |
+| `DATABASE_PATH` | Storage location path for SQLite (`data/researchmind.db`). | `data/researchmind.db` |
+| `CHROMA_DB_PATH` | Directory for vector index files (`data/chroma_db`). | `data/chroma_db` |
+| `OLLAMA_BASE_URL` | Ollama service endpoint for embeddings. | `http://localhost:11434` |
+| `OLLAMA_MODEL` | Ollama model identifier for embeddings. | `all-minilm:l6` |
+| `GROQ_MODEL` | Groq LLM model identifier. | `qwen/qwen3.8-27b` |
+| `USE_AGENT` | Feature flag: enable LangGraph multi-agent workflow. | `true` |
+| `USE_HYBRID` | Feature flag: enable hybrid dense + BM25 sparse search with RRF. | `true` |
+| `USE_RERANKER` | Feature flag: enable cross-encoder reranking. | `true` |
+| `RERANKER_MODEL` | Sentence-Transformers cross-encoder model name. | `BAAI/bge-reranker-base` |
 
 ### Frontend Environment Variables (`frontend/.env`)
 | Variable | Description |
@@ -161,9 +202,39 @@ npm run dev
 
 ---
 
+## 🧪 Testing & Evaluation
+
+### Running Unit Tests
+Unit tests verify Reciprocal Rank Fusion (RRF), BM25 multi-user data isolation, query router structured output parsing, agent cycle limits, Wikipedia external tool fallback, and multi-document scoping:
+```bash
+pytest -v tests/test_researchmind.py
+```
+
+### Running RAGAS Evaluation
+Benchmark the 4 retrieval and reasoning configurations:
+1. **Baseline MMR**: Dense similarity retrieval with maximal marginal relevance.
+2. **Hybrid Search**: BM25 keyword search + Chroma dense embeddings fused via RRF ($k=60$).
+3. **Hybrid + Cross-Encoder Rerank**: Re-scoring candidates with `BAAI/bge-reranker-base`.
+4. **Full LangGraph Agent**: Routing, query decomposition, document grading, fallback tools, and anti-hallucination grounding checks.
+
+Execute evaluation across the benchmark testset (`eval/testset.json`):
+```bash
+# Run full benchmark
+python -m eval.run_eval
+
+# Run fast smoke test on first 4 questions
+python -m eval.run_eval 4
+```
+
+Results are saved to:
+* `eval/results.csv` — Raw metric scores and latencies.
+* `eval/results.md` — Formatted Markdown summary comparison table.
+
+---
+
 ## 🗺️ Future Roadmap
 
-- [ ] **Multi-Document Comparative Search** — Ask questions across multiple papers simultaneously.
+- [x] **Multi-Document Comparative Search** — Ask questions across multiple papers simultaneously.
 - [ ] **Dark Mode Support** — Seamless light/dark mode transitions.
 - [ ] **Export Chat Logs** — Export conversation transcripts as Markdown or PDF.
 - [ ] **ArXiv Integration** — Search and import papers directly using ArXiv IDs.
@@ -175,6 +246,7 @@ npm run dev
 1. **Google OAuth 2.0 Identity Token Verification** — Prevents credential spoofing.
 2. **Stateful JWT Auth Guards** — Keeps endpoints secured from unauthenticated request payloads.
 3. **Database Row-Level Separation** — Queries explicitly filter records by active `user_id`, maintaining strong security boundaries.
+4. **Multi-User Vector & Sparse Isolation** — Vector queries and BM25 tokenizers strictly filter by `{"$and": [{"user_id": user_id}, ...]}` ensuring zero cross-tenant leakage.
 
 ---
 

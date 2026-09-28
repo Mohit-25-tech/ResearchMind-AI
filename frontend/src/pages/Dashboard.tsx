@@ -6,14 +6,18 @@ import ChatInput from "../components/Chat/ChatInput";
 import SourcePanel from "../components/Chat/SourcePanel";
 import { useDocuments } from "../hooks/useDocuments";
 import { useChat } from "../hooks/useChat";
+import { updateConversationDocuments } from "../api/conversations";
 
 export default function Dashboard() {
   const {
     documents,
     isLoading: docsLoading,
     error: docsError,
-    selectedDocumentId,
+    selectedDocumentIds,
+    setSelectedDocumentIds,
+    toggleDocument,
     selectDocument,
+    clearSelection,
     upload,
     remove,
     fetchDocs,
@@ -40,21 +44,49 @@ export default function Dashboard() {
     clearAllConversationsHistory,
   } = useChat();
 
-  const selectedDoc = documents.find(
-    (d) => d.document_id === selectedDocumentId,
-  );
-  const selectedDocName = selectedDoc?.filename ?? null;
+  const scopedDocuments = documents
+    .filter((d) => selectedDocumentIds.includes(d.document_id))
+    .map((d) => ({ id: d.document_id, name: d.filename }));
+
+  const headerLabel =
+    selectedDocumentIds.length === 1
+      ? scopedDocuments[0]?.name ?? null
+      : selectedDocumentIds.length > 1
+      ? `${selectedDocumentIds.length} documents scoped`
+      : null;
+
+  const handleToggleDocument = (id: string) => {
+    toggleDocument(id);
+    if (currentConversationId) {
+      const next = selectedDocumentIds.includes(id)
+        ? selectedDocumentIds.filter((d) => d !== id)
+        : [...selectedDocumentIds, id];
+      updateConversationDocuments(currentConversationId, next).catch(() => {});
+    }
+  };
+
+  const handleClearScope = () => {
+    clearSelection();
+    if (currentConversationId) {
+      updateConversationDocuments(currentConversationId, []).catch(() => {});
+    }
+  };
+
+  const handleSelectConversation = async (id: number | null) => {
+    const docIds = await selectConversation(id);
+    setSelectedDocumentIds(docIds);
+  };
 
   function handleSendMessage(text: string) {
-    sendMessage(text, selectedDocumentId);
+    sendMessage(text, selectedDocumentIds);
   }
 
   function handleRegenerate() {
-    regenerate(selectedDocumentId);
+    regenerate(selectedDocumentIds);
   }
 
   function handleSendExample(prompt: string) {
-    sendMessage(prompt, selectedDocumentId);
+    sendMessage(prompt, selectedDocumentIds);
   }
 
   return (
@@ -65,7 +97,7 @@ export default function Dashboard() {
       transition={{ duration: 0.2 }}
       className="flex flex-col h-screen w-screen overflow-hidden bg-bg"
     >
-      <Header selectedDocumentName={selectedDocName} />
+      <Header selectedDocumentName={headerLabel} />
 
       <div className="flex flex-1 min-h-0">
         {/* Left — Research Library & Conversations */}
@@ -74,18 +106,19 @@ export default function Dashboard() {
             documents={documents}
             isLoading={docsLoading}
             error={docsError}
-            selectedDocumentId={selectedDocumentId}
+            selectedDocumentIds={selectedDocumentIds}
+            onToggleDocument={handleToggleDocument}
+            onClearDocumentSelection={handleClearScope}
             isUploading={isUploading}
             uploadProgress={uploadProgress}
             uploadError={uploadError}
             onUpload={upload}
-            onSelect={selectDocument}
             onDelete={remove}
             onRetryFetch={fetchDocs}
             
             conversations={conversations}
             currentConversationId={currentConversationId}
-            onSelectConversation={selectConversation}
+            onSelectConversation={handleSelectConversation}
             onDeleteConversation={removeConversation}
             onRenameConversation={editConversationTitle}
             onClearAllDocuments={clearAllDocs}
@@ -110,7 +143,9 @@ export default function Dashboard() {
           />
           <ChatInput
             isLoading={chatLoading}
-            selectedDocumentName={selectedDocName}
+            scopedDocuments={scopedDocuments}
+            onRemoveScopedDocument={handleToggleDocument}
+            onClearScope={handleClearScope}
             onSend={handleSendMessage}
           />
         </div>

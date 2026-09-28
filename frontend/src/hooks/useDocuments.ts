@@ -7,7 +7,7 @@ import {
   clearAllDocuments,
 } from "../api/documents";
 
-const SELECTED_DOC_KEY = "ai-research-selected-document";
+const SELECTED_DOCS_KEY = "ai-research-selected-documents";
 
 export function useDocuments() {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -17,10 +17,21 @@ export function useDocuments() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // Restore selected document from localStorage
-  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(
-    () => localStorage.getItem(SELECTED_DOC_KEY),
-  );
+  // Restore selected documents from localStorage
+  const [selectedDocumentIds, setSelectedDocumentIdsState] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(SELECTED_DOCS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+      // Backwards compatibility with single doc key
+      const single = localStorage.getItem("ai-research-selected-document");
+      return single ? [single] : [];
+    } catch {
+      return [];
+    }
+  });
 
   const fetchDocs = useCallback(async () => {
     setIsLoading(true);
@@ -29,30 +40,50 @@ export function useDocuments() {
       const data = await fetchDocuments();
       setDocuments(data.documents);
     } catch {
-      setError("Failed to fetch documents. Please try again.");
+      setError("Failed to load documents. Please try again.");
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Auto-fetch on mount
   useEffect(() => {
     fetchDocs();
   }, [fetchDocs]);
 
-  const selectDocument = useCallback((id: string | null) => {
-    setSelectedDocumentId(id);
-    if (id) {
-      localStorage.setItem(SELECTED_DOC_KEY, id);
-    } else {
-      localStorage.removeItem(SELECTED_DOC_KEY);
+  const setSelectedDocumentIds = useCallback((ids: string[]) => {
+    setSelectedDocumentIdsState(ids);
+    try {
+      localStorage.setItem(SELECTED_DOCS_KEY, JSON.stringify(ids));
+    } catch {
+      // ignore
     }
   }, []);
 
-  const clearSelection = useCallback(() => {
-    setSelectedDocumentId(null);
-    localStorage.removeItem(SELECTED_DOC_KEY);
+  const toggleDocument = useCallback((id: string) => {
+    setSelectedDocumentIdsState((prev) => {
+      const next = prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id];
+      try {
+        localStorage.setItem(SELECTED_DOCS_KEY, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
   }, []);
+
+  const selectDocument = useCallback((id: string | null) => {
+    if (!id) {
+      setSelectedDocumentIds([]);
+    } else {
+      toggleDocument(id);
+    }
+  }, [setSelectedDocumentIds, toggleDocument]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedDocumentIds([]);
+  }, [setSelectedDocumentIds]);
+
+  const selectedDocumentId = selectedDocumentIds[0] ?? null;
 
   const upload = useCallback(
     async (file: File) => {
@@ -78,15 +109,21 @@ export function useDocuments() {
     async (id: string) => {
       try {
         await deleteDocument(id);
-        if (selectedDocumentId === id) {
-          clearSelection();
-        }
+        setSelectedDocumentIdsState((prev) => {
+          const next = prev.filter((d) => d !== id);
+          try {
+            localStorage.setItem(SELECTED_DOCS_KEY, JSON.stringify(next));
+          } catch {
+            // ignore
+          }
+          return next;
+        });
         await fetchDocs();
       } catch {
         setError("Failed to delete document. Please try again.");
       }
     },
-    [fetchDocs, selectedDocumentId, clearSelection],
+    [fetchDocs],
   );
 
   const clearAllDocs = useCallback(async () => {
@@ -104,6 +141,9 @@ export function useDocuments() {
     isLoading,
     error,
     selectedDocumentId,
+    selectedDocumentIds,
+    setSelectedDocumentIds,
+    toggleDocument,
     selectDocument,
     clearSelection,
     upload,

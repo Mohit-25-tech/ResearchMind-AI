@@ -5,7 +5,8 @@ def retrieve_chunks(
     query: str,
     user_id: int,
     k: int = 5,
-    document_id: str | None = None,
+    document_id: str | list[str] | None = None,
+    document_ids: list[str] | str | None = None,
 ):
     """
     Retrieve relevant chunks for the user.
@@ -21,22 +22,32 @@ def retrieve_chunks(
     if not valid_doc_ids:
         return []
 
+    target_input = document_ids if document_ids is not None else document_id
+    if target_input:
+        if isinstance(target_input, str):
+            requested = [d.strip() for d in target_input.split(",") if d.strip()]
+        else:
+            requested = [str(d).strip() for d in target_input if str(d).strip()]
+        target_ids = [d for d in requested if d in valid_doc_ids]
+        if not target_ids:
+            return []
+    else:
+        target_ids = valid_doc_ids
+
     vector_store = get_vector_store()
 
-    if document_id is not None:
-        if document_id not in valid_doc_ids:
-            return []
+    if len(target_ids) == 1:
         filters = {
             "$and": [
                 {"user_id": user_id},
-                {"document_id": document_id}
+                {"document_id": target_ids[0]}
             ]
         }
     else:
         filters = {
             "$and": [
                 {"user_id": user_id},
-                {"document_id": {"$in": valid_doc_ids}}
+                {"document_id": {"$in": target_ids}}
             ]
         }
 

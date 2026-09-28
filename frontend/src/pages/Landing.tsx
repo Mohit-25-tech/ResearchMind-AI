@@ -175,7 +175,7 @@ export default function Landing() {
                       }
                     }}
                     onError={() => {
-                      console.log("Login Failed");
+                      console.error("Login Failed");
                     }}
                     theme="outline"
                     shape="pill"

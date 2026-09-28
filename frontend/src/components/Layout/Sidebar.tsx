@@ -10,12 +10,13 @@ interface SidebarProps {
   documents: Document[];
   isLoading: boolean;
   error: string | null;
-  selectedDocumentId: string | null;
+  selectedDocumentIds: string[];
+  onToggleDocument: (id: string) => void;
+  onClearDocumentSelection: () => void;
   isUploading: boolean;
   uploadProgress: number | null;
   uploadError: string | null;
   onUpload: (file: File) => void;
-  onSelect: (id: string | null) => void;
   onDelete: (id: string) => void;
   onRetryFetch: () => void;
   
@@ -54,12 +55,13 @@ export default function Sidebar({
   documents,
   isLoading,
   error,
-  selectedDocumentId,
+  selectedDocumentIds,
+  onToggleDocument,
+  onClearDocumentSelection,
   isUploading,
   uploadProgress,
   uploadError,
   onUpload,
-  onSelect,
   onDelete,
   onRetryFetch,
   
@@ -129,15 +131,20 @@ export default function Sidebar({
 
       {/* All Documents filter */}
       <button
-        onClick={() => onSelect(null)}
-        className={`mx-2 px-2.5 py-1.5 rounded-md text-xs text-left transition-colors cursor-pointer flex items-center gap-1.5
+        onClick={onClearDocumentSelection}
+        className={`mx-2 px-2.5 py-1.5 rounded-md text-xs text-left transition-colors cursor-pointer flex items-center justify-between
           ${
-            selectedDocumentId === null
+            selectedDocumentIds.length === 0
               ? "bg-accent-subtle text-accent font-medium"
               : "text-text-secondary hover:text-text-primary hover:bg-surface-hover"
           }`}
       >
-        All Documents
+        <span>All Documents</span>
+        {selectedDocumentIds.length > 0 && (
+          <span className="text-[10px] bg-accent/15 text-accent px-1.5 py-0.5 rounded-full font-semibold">
+            {selectedDocumentIds.length} scoped
+          </span>
+        )}
       </button>
 
       {/* Document list */}
@@ -146,8 +153,8 @@ export default function Sidebar({
           documents={documents}
           isLoading={isLoading}
           error={error}
-          selectedDocumentId={selectedDocumentId}
-          onSelect={onSelect}
+          selectedDocumentIds={selectedDocumentIds}
+          onToggle={onToggleDocument}
           onDelete={onDelete}
           onRetry={onRetryFetch}
         />

@@ -9,6 +9,7 @@ import { startTypingAnimation } from "../utils/typing";
 export function useChat() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
+  const [currentConversationDocIds, setCurrentConversationDocIds] = useState<string[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +32,7 @@ export function useChat() {
     loadConversations();
   }, [loadConversations]);
 
-  const selectConversation = useCallback(async (id: number | null) => {
+  const selectConversation = useCallback(async (id: number | null): Promise<string[]> => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -46,7 +47,8 @@ export function useChat() {
 
     if (id === null) {
       setMessages([]);
-      return;
+      setCurrentConversationDocIds([]);
+      return [];
     }
 
     setIsLoading(true);
@@ -58,8 +60,12 @@ export function useChat() {
         content: m.content,
       }));
       setMessages(mappedMessages);
+      const docIds = data.selected_document_ids || [];
+      setCurrentConversationDocIds(docIds);
+      return docIds;
     } catch {
       setError("Failed to load messages.");
+      return [];
     } finally {
       setIsLoading(false);
     }
@@ -100,7 +106,7 @@ export function useChat() {
   }, [selectConversation, loadConversations]);
 
   const sendMessage = useCallback(
-    async (question: string, documentId?: string | null) => {
+    async (question: string, documentIds?: string[] | string | null) => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -134,7 +140,7 @@ export function useChat() {
         const data = await sendChatMessage(
           question,
           currentConversationId ? String(currentConversationId) : "",
-          documentId,
+          documentIds,
           abortController.signal,
         );
 
@@ -164,6 +170,7 @@ export function useChat() {
                       ...msg,
                       content: data.answer,
                       sources: data.sources,
+                      trace: data.trace,
                       isTyping: false,
                     }
                   : msg,
@@ -195,10 +202,11 @@ export function useChat() {
     setError(null);
     setIsLoading(false);
     setCurrentConversationId(null);
+    setCurrentConversationDocIds([]);
   }, []);
 
   const regenerate = useCallback(
-    (documentId?: string | null) => {
+    (documentIds?: string[] | string | null) => {
       const lastUserMessage = [...messages]
         .reverse()
         .find((m) => m.role === "user");
@@ -219,7 +227,7 @@ export function useChat() {
         return prev.filter((_, i) => i !== lastUserIndex);
       });
 
-      sendMessage(lastUserMessage.content, documentId);
+      sendMessage(lastUserMessage.content, documentIds);
     },
     [messages, sendMessage],
   );
@@ -237,6 +245,7 @@ export function useChat() {
     lastSources,
     conversations,
     currentConversationId,
+    currentConversationDocIds,
     sendMessage,
     clearChat,
     regenerate,

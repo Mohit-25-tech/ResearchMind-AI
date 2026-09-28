@@ -1,4 +1,4 @@
-import { FileText, BookOpen, Download } from "lucide-react";
+import { FileText, BookOpen, Download, ExternalLink, Globe } from "lucide-react";
 import type { Source } from "../../types/chat";
 import api from "../../api/api";
 
@@ -50,52 +50,87 @@ export default function SourcePanel({ sources }: SourcePanelProps) {
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {sources.map((source, idx) => (
-              <div
-                key={`${source.document_id}-${idx}`}
-                className="rounded-lg border border-border bg-surface-elevated/50 p-3"
-              >
-                {/* Filename & Download */}
-                <div className="flex items-start justify-between gap-1.5 mb-2">
-                  <div className="flex items-start gap-1.5 truncate">
-                    <FileText size={12} className="text-accent mt-0.5 shrink-0" />
-                    <p
-                      className="text-xs font-medium text-text-primary truncate"
-                      title={source.filename}
-                    >
-                      {source.filename}
-                    </p>
+            {sources.map((source, idx) => {
+              const isExternal = Boolean(source.url);
+              return (
+                <div
+                  key={`${source.document_id}-${idx}`}
+                  className="rounded-lg border border-border bg-surface-elevated/50 p-3"
+                >
+                  {/* Filename & Actions */}
+                  <div className="flex items-start justify-between gap-1.5 mb-2">
+                    <div className="flex items-start gap-1.5 truncate">
+                      {isExternal ? (
+                        <Globe size={12} className="text-accent mt-0.5 shrink-0" />
+                      ) : (
+                        <FileText size={12} className="text-accent mt-0.5 shrink-0" />
+                      )}
+                      <p
+                        className="text-xs font-medium text-text-primary truncate"
+                        title={source.filename}
+                      >
+                        {source.filename}
+                      </p>
+                    </div>
+
+                    {isExternal ? (
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1 rounded hover:bg-surface-hover text-text-muted hover:text-accent transition-colors cursor-pointer shrink-0"
+                        title="Open Source Link"
+                      >
+                        <ExternalLink size={11} />
+                      </a>
+                    ) : (
+                      <button
+                        onClick={() => handleDownload(source.document_id, source.filename)}
+                        className="p-1 rounded hover:bg-surface-hover text-text-muted hover:text-accent transition-colors cursor-pointer shrink-0"
+                        title="Download PDF"
+                      >
+                        <Download size={11} />
+                      </button>
+                    )}
                   </div>
-                  <button
-                    onClick={() => handleDownload(source.document_id, source.filename)}
-                    className="p-1 rounded hover:bg-surface-hover text-text-muted hover:text-accent transition-colors cursor-pointer shrink-0"
-                    title="Download PDF"
-                  >
-                    <Download size={11} />
-                  </button>
-                </div>
 
-                {/* Page badges */}
-                <div className="flex flex-wrap gap-1 mb-1.5">
-                  {(Array.isArray(source.pages) ? source.pages : []).map((page) => (
-                    <span
-                      key={page}
-                      className="inline-flex items-center px-1.5 py-0.5 rounded
-                                 text-[10px] font-medium
-                                 bg-accent-subtle text-accent"
+                  {/* Page badges if local PDF */}
+                  {!isExternal && (
+                    <>
+                      <div className="flex flex-wrap gap-1 mb-1.5">
+                        {(Array.isArray(source.pages) ? source.pages : []).map((page) => (
+                          <span
+                            key={page}
+                            className="inline-flex items-center px-1.5 py-0.5 rounded
+                                       text-[10px] font-medium
+                                       bg-accent-subtle text-accent"
+                          >
+                            p.{page + 1}
+                          </span>
+                        ))}
+                      </div>
+
+                      <p className="text-[10px] text-text-muted">
+                        {(Array.isArray(source.pages) ? source.pages.length : 0)}{" "}
+                        {(Array.isArray(source.pages) ? source.pages.length : 0) === 1 ? "passage" : "passages"} retrieved
+                      </p>
+                    </>
+                  )}
+
+                  {/* External source details */}
+                  {isExternal && (
+                    <a
+                      href={source.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-accent hover:underline flex items-center gap-1 mt-1 truncate"
                     >
-                      p.{page + 1}
-                    </span>
-                  ))}
+                      <span className="truncate">{source.url}</span>
+                    </a>
+                  )}
                 </div>
-
-                {/* Count */}
-                <p className="text-[10px] text-text-muted">
-                  {(Array.isArray(source.pages) ? source.pages.length : 0)}{" "}
-                  {(Array.isArray(source.pages) ? source.pages.length : 0) === 1 ? "passage" : "passages"} retrieved
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

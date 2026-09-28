@@ -1,0 +1,155 @@
+{
+  "_comment": "TODO: Review and edit these 25 question/ground_truth pairs generated from your uploaded research library (BERT-based Ensemble Approaches for Hate Speech Detection, NLP architectures, etc.). Includes 5 multi-part/comparison questions and 3 unanswerable questions to test refusal.",
+  "testset": [
+    {
+      "id": 1,
+      "question": "What is the primary objective of the BERT-based research paper?",
+      "ground_truth": "The primary objective is to investigate and propose BERT-based ensemble approaches for automated hate speech detection in online social media.",
+      "type": "single_hop"
+    },
+    {
+      "id": 2,
+      "question": "Who are the authors of the paper on BERT-based ensemble approaches?",
+      "ground_truth": "The authors are Khouloud Mnassri, Praboda Rajapaksha, Reza Farahbakhsh, and Noel Crespi from Telecom SudParis, Institut Polytechnique de Paris.",
+      "type": "single_hop"
+    },
+    {
+      "id": 3,
+      "question": "What does BERT stand for?",
+      "ground_truth": "BERT stands for Bidirectional Encoder Representations from Transformers.",
+      "type": "single_hop"
+    },
+    {
+      "id": 4,
+      "question": "Why is automated hate speech detection challenging on social media platforms?",
+      "ground_truth": "It is challenging due to the high volume of content, informal language, abbreviations, noisy data, sarcasm, and subtle context-dependent linguistic nuances.",
+      "type": "single_hop"
+    },
+    {
+      "id": 5,
+      "question": "What role does the Long Short-Term Memory (LSTM) network play in the baseline comparisons?",
+      "ground_truth": "LSTM is used as a recurrent neural network baseline to capture sequential dependencies in text before evaluating Transformer-based models.",
+      "type": "single_hop"
+    },
+    {
+      "id": 6,
+      "question": "How does BERT process text bidirectionally compared to traditional sequential models?",
+      "ground_truth": "BERT uses self-attention mechanisms to condition on both left and right context simultaneously across all Transformer layers, unlike unidirectional left-to-right LSTMs.",
+      "type": "single_hop"
+    },
+    {
+      "id": 7,
+      "question": "What pre-training tasks are typically utilized by BERT?",
+      "ground_truth": "BERT is pre-trained using Masked Language Modeling (MLM) and Next Sentence Prediction (NSP).",
+      "type": "single_hop"
+    },
+    {
+      "id": 8,
+      "question": "What is the benefit of using an ensemble approach over a single classifier?",
+      "ground_truth": "Ensemble approaches combine predictions from multiple diverse models to reduce variance, improve generalization, and achieve higher classification robustness.",
+      "type": "single_hop"
+    },
+    {
+      "id": 9,
+      "question": "Which evaluation metrics are primarily reported for hate speech classification in the paper?",
+      "ground_truth": "The primary evaluation metrics reported are Precision, Recall, Macro F1-score, and Accuracy.",
+      "type": "single_hop"
+    },
+    {
+      "id": 10,
+      "question": "What loss function is commonly used for fine-tuning classification models in this study?",
+      "ground_truth": "Cross-entropy loss (or binary cross-entropy for binary classification) is standardly used for fine-tuning.",
+      "type": "single_hop"
+    },
+    {
+      "id": 11,
+      "question": "How are text inputs tokenized prior to feeding into the BERT model?",
+      "ground_truth": "Inputs are tokenized using WordPiece tokenization, adding special tokens [CLS] at the beginning and [SEP] at the end.",
+      "type": "single_hop"
+    },
+    {
+      "id": 12,
+      "question": "What is the significance of the [CLS] token in BERT for classification?",
+      "ground_truth": "The final hidden state corresponding to the special [CLS] token serves as an aggregate sequence representation for classification tasks.",
+      "type": "single_hop"
+    },
+    {
+      "id": 13,
+      "question": "How do attention mechanisms help in identifying offensive language?",
+      "ground_truth": "Self-attention weights highlight key trigger words and their semantic relationships with other words in the sentence, even over long distances.",
+      "type": "single_hop"
+    },
+    {
+      "id": 14,
+      "question": "What preprocessing steps are applied to the social media text corpus?",
+      "ground_truth": "Preprocessing typically includes lowercasing, removal of URLs, usernames/mentions, special symbols, and handling emojis and contractions.",
+      "type": "single_hop"
+    },
+    {
+      "id": 15,
+      "question": "What hardware or framework is commonly used for fine-tuning transformer models in PyTorch?",
+      "ground_truth": "Fine-tuning is commonly executed using PyTorch with GPU acceleration (such as NVIDIA CUDA) and Hugging Face Transformers.",
+      "type": "single_hop"
+    },
+    {
+      "id": 16,
+      "question": "What is class imbalance and how does it affect hate speech datasets?",
+      "ground_truth": "Hate speech is typically a small minority class in real-world social data; class imbalance can cause models to bias heavily towards predicting non-hate text.",
+      "type": "single_hop"
+    },
+    {
+      "id": 17,
+      "question": "What is the effect of learning rate warm-up during transformer fine-tuning?",
+      "ground_truth": "Learning rate warm-up gradually increases the learning rate during initial training steps to prevent divergent gradients and stabilize attention layers.",
+      "type": "single_hop"
+    },
+    {
+      "id": 18,
+      "question": "How does BERT compare to LSTM in terms of capturing contextual nuances, and which model achieves higher overall F1-score?",
+      "ground_truth": "BERT captures bidirectional contextual relationships simultaneously across all words using multi-head self-attention, whereas LSTM processes sequences step-by-step; BERT achieves significantly higher F1-scores than LSTM.",
+      "type": "comparison"
+    },
+    {
+      "id": 19,
+      "question": "What are the trade-offs between a single fine-tuned BERT model versus an ensemble of models in terms of inference latency and predictive accuracy?",
+      "ground_truth": "A single fine-tuned BERT model provides lower computational overhead and faster inference latency, whereas an ensemble provides higher predictive accuracy and lower variance at the cost of increased memory and compute requirements.",
+      "type": "comparison"
+    },
+    {
+      "id": 20,
+      "question": "How do WordPiece embeddings in BERT differ from static word vectors like Word2Vec or GloVe when dealing with out-of-vocabulary words in informal social media text?",
+      "ground_truth": "WordPiece splits unfamiliar words into known subword units so it rarely encounters out-of-vocabulary tokens, whereas static Word2Vec or GloVe map unseen slang or misspellings to generic uninformative unknown tokens.",
+      "type": "comparison"
+    },
+    {
+      "id": 21,
+      "question": "Explain the architectural difference between recurrent feedback in LSTMs and multi-head self-attention in Transformers, and why Transformers scale better during training.",
+      "ground_truth": "LSTMs rely on sequential hidden state passing where step t depends on step t-1, preventing parallelization; Transformers use multi-head self-attention without sequential recurrence, allowing parallel processing across the entire sequence during training on GPUs.",
+      "type": "comparison"
+    },
+    {
+      "id": 22,
+      "question": "What are the two stages in the BERT lifecycle—pre-training and fine-tuning—and what data is used in each stage?",
+      "ground_truth": "Pre-training is conducted on large unlabelled corpora (BooksCorpus and English Wikipedia) using self-supervised objectives, while fine-tuning is conducted on a smaller domain-specific labeled dataset for the specific classification task.",
+      "type": "multi_part"
+    },
+    {
+      "id": 23,
+      "question": "What are the quantum computing benchmarks and superconducting qubit coherence times evaluated in this paper?",
+      "ground_truth": "I couldn't find that information in the uploaded documents.",
+      "type": "unanswerable"
+    },
+    {
+      "id": 24,
+      "question": "How does the paper optimize CRISPR-Cas9 base editing efficiency for human genetic therapies?",
+      "ground_truth": "I couldn't find that information in the uploaded documents.",
+      "type": "unanswerable"
+    },
+    {
+      "id": 25,
+      "question": "What was the total financial revenue and net profit margin reported by Apple in Q4 2023 according to the documents?",
+      "ground_truth": "I couldn't find that information in the uploaded documents.",
+      "type": "unanswerable"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+Configuration,Faithfulness,Answer Relevancy,Context Precision,Context Recall,Avg Latency (s)
+baseline_mmr,0.0,0.0,0.0,0.0,4.612
+hybrid_rrf,0.0,0.0,0.0,0.0,3.947
+hybrid_rerank,0.0,0.0,0.0,0.0,19.425
+langgraph_agent,1.0,0.9521,0.0,0.0,22.049

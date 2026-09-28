@@ -74,10 +74,17 @@ def initialize_database():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER REFERENCES users(id),
             title TEXT NOT NULL,
+            selected_document_ids TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
+
+    # Check if selected_document_ids exists in conversations
+    cursor.execute("PRAGMA table_info(conversations)")
+    conv_cols = [col[1] for col in cursor.fetchall()]
+    if "selected_document_ids" not in conv_cols:
+        cursor.execute("ALTER TABLE conversations ADD COLUMN selected_document_ids TEXT")
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS messages (

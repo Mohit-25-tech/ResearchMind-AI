@@ -1,7 +1,7 @@
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
 from dotenv import load_dotenv
+from app.config.settings import settings
 
 load_dotenv()
 
-model = ChatGroq(model_name="openai/gpt-oss-20b")
+model = ChatGroq(model_name=settings.groq_model)

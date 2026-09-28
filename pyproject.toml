@@ -1,9 +1,13 @@
 [project]
 name = "ai-research"
 version = "0.1.0"
-description = "Add your description here"
+description = "ResearchMind AI - Multi-user RAG Assistant"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "python-multipart>=0.0.32",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

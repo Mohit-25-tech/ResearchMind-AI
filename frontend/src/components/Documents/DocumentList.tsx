@@ -10,8 +10,8 @@ interface DocumentListProps {
   documents: Document[];
   isLoading: boolean;
   error: string | null;
-  selectedDocumentId: string | null;
-  onSelect: (id: string) => void;
+  selectedDocumentIds: string[];
+  onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onRetry: () => void;
 }
@@ -20,8 +20,8 @@ export default function DocumentList({
   documents,
   isLoading,
   error,
-  selectedDocumentId,
-  onSelect,
+  selectedDocumentIds,
+  onToggle,
   onDelete,
   onRetry,
 }: DocumentListProps) {
@@ -50,8 +50,8 @@ export default function DocumentList({
           <DocumentCard
             key={doc.document_id}
             document={doc}
-            isSelected={selectedDocumentId === doc.document_id}
-            onSelect={onSelect}
+            isSelected={selectedDocumentIds.includes(doc.document_id)}
+            onToggle={onToggle}
             onDelete={onDelete}
           />
         ))}

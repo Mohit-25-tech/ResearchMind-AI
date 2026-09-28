@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { BrainCircuit, User, Copy, Check, RefreshCw } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { BrainCircuit, User, Copy, Check, RefreshCw, ChevronDown, ChevronRight, Workflow } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
@@ -20,6 +20,7 @@ export default function Message({
   onRegenerate,
 }: MessageProps) {
   const [copied, setCopied] = useState(false);
+  const [showSteps, setShowSteps] = useState(false);
   const isUser = message.role === "user";
   const isAssistant = message.role === "assistant";
 
@@ -76,6 +77,40 @@ export default function Message({
 
       {/* Content */}
       <div className={`min-w-0 max-w-[80%] ${isUser ? "text-right" : ""}`}>
+        {/* Collapsible Agent Steps (if available) */}
+        {isAssistant && message.trace && message.trace.length > 0 && (
+          <div className="mb-2 text-left">
+            <button
+              onClick={() => setShowSteps(!showSteps)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium
+                         text-text-muted bg-surface-elevated hover:bg-surface-hover hover:text-text-primary
+                         border border-border transition-colors cursor-pointer"
+            >
+              <Workflow size={12} className="text-accent" />
+              <span>Agent steps ({message.trace.length})</span>
+              {showSteps ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+            </button>
+
+            <AnimatePresence>
+              {showSteps && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-1.5 p-2.5 rounded-lg bg-surface-elevated/70 border border-border text-[11px] space-y-1.5 overflow-hidden"
+                >
+                  {message.trace.map((step, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-text-secondary">
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+                      <span className="font-mono text-[10.5px]">{step}</span>
+                    </div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
         <div
           className={`inline-block rounded-xl px-3.5 py-2 ${
             isUser

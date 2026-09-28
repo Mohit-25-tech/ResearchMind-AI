@@ -3,7 +3,7 @@ import type { ChatResponse } from "../types/chat";
 
 /**
  * Send a chat message.
- * POST /chat?question=...&session_id=...&document_id=...
+ * POST /chat?question=...&session_id=...&document_ids=...
  *
  * Uses query parameters (not JSON body) to match the FastAPI endpoint.
  * Accepts an AbortSignal for request cancellation.
@@ -11,20 +11,25 @@ import type { ChatResponse } from "../types/chat";
 export async function sendChatMessage(
   question: string,
   sessionId: string,
-  documentId?: string | null,
+  documentIds?: string[] | string | null,
   signal?: AbortSignal,
 ): Promise<ChatResponse> {
-  const params: Record<string, string> = {
-    question,
-    session_id: sessionId,
-  };
+  const searchParams = new URLSearchParams();
+  searchParams.append("question", question);
+  searchParams.append("session_id", sessionId);
 
-  if (documentId) {
-    params.document_id = documentId;
+  const ids: string[] = Array.isArray(documentIds)
+    ? documentIds
+    : documentIds
+    ? [documentIds]
+    : [];
+
+  ids.forEach((id) => searchParams.append("document_ids", id));
+  if (ids.length > 0) {
+    searchParams.append("document_id", ids[0]);
   }
 
-  const response = await api.post<ChatResponse>("/chat", null, {
-    params,
+  const response = await api.post<ChatResponse>(`/chat?${searchParams.toString()}`, null, {
     signal,
   });
 

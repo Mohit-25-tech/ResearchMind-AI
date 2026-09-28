@@ -1,20 +1,20 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { FileText, Trash2, BookOpen, Layers, Clock } from "lucide-react";
+import { FileText, Trash2, BookOpen, Layers, Clock, Check } from "lucide-react";
 import type { Document } from "../../types/document";
 import { formatDate } from "../../utils/formatDate";
 
 interface DocumentCardProps {
   document: Document;
   isSelected: boolean;
-  onSelect: (id: string) => void;
+  onToggle: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
 export default function DocumentCard({
   document,
   isSelected,
-  onSelect,
+  onToggle,
   onDelete,
 }: DocumentCardProps) {
   const [showConfirm, setShowConfirm] = useState(false);
@@ -40,23 +40,32 @@ export default function DocumentCard({
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
-      onClick={() => onSelect(document.document_id)}
-      className={`group relative rounded-md px-2.5 py-2 cursor-pointer sidebar-transition
+      onClick={() => onToggle(document.document_id)}
+      className={`group relative rounded-md px-2.5 py-2 cursor-pointer sidebar-transition border-l-2
         ${
           isSelected
-            ? "bg-accent-subtle border-l-2 border-accent font-medium shadow-sm"
-            : "hover:bg-surface-hover border-l-2 border-transparent"
+            ? "bg-accent-subtle/70 border-accent font-medium shadow-sm"
+            : "hover:bg-surface-hover border-transparent"
         }`}
     >
-      {/* Header: icon + filename + delete */}
+      {/* Header: checkbox + icon + filename + delete */}
       <div className="flex items-center gap-2">
+        <div
+          className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
+            isSelected
+              ? "bg-accent border-accent text-white"
+              : "border-border-muted group-hover:border-border text-transparent"
+          }`}
+        >
+          <Check size={10} strokeWidth={3} className={isSelected ? "opacity-100" : "opacity-0"} />
+        </div>
         <FileText
           size={13}
           className={`shrink-0 ${isSelected ? "text-accent" : "text-text-muted"}`}
         />
         <p
           className={`text-xs font-medium truncate flex-1 ${
-            isSelected ? "text-accent-hover" : "text-text-primary"
+            isSelected ? "text-accent-hover font-semibold" : "text-text-primary"
           }`}
           title={document.filename}
         >

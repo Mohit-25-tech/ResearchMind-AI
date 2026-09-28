@@ -36,9 +36,17 @@ PyJWT
 google-auth
 
 # ==========================================
-# Utilities
+# Utilities & Search
 # ==========================================
 httpx
 aiofiles
 tenacity
 orjson
+rank_bm25
+sentence-transformers
+arxiv
+wikipedia
+ragas
+pytest
+langgraph
+tabulate
