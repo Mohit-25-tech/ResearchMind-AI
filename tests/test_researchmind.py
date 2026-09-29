@@ -373,4 +373,249 @@ def test_multi_document_scoping_retrieval(monkeypatch):
     assert source_ids == {"doc_A", "doc_B"}
 
 
+# ==========================================
+# 8. Unit/E2E Test: Bug A - Wikipedia Fallback Answer Matches Grounding
+# ==========================================
+def test_external_wikipedia_fallback_grounding_matches_answer(monkeypatch):
+    """
+    Test Bug A: When PDF_RAG fails relevance grading and falls back to Wikipedia,
+    the exact answer validated by grounding_check is returned to the user,
+    is non-empty, and does NOT get swallowed into a generic error message.
+    """
+    from unittest.mock import MagicMock
+    from langchain_core.runnables import Runnable, RunnableLambda
+    from app.agent.graph import run_agent
+
+    mock_wiki = MagicMock(return_value=[{
+        "title": "Gradient descent",
+        "url": "https://en.wikipedia.org/wiki/Gradient_descent",
+        "summary": "Gradient descent is a first-order iterative optimization algorithm for finding a local minimum of a differentiable function."
+    }])
+    monkeypatch.setattr("app.agent.nodes.wikipedia_tool", mock_wiki)
+
+    monkeypatch.setattr("app.services.conversation_manager.get_conversation_history", lambda cid: [])
+    monkeypatch.setattr("app.services.conversation_manager.save_conversation", lambda **kwargs: None)
+
+    # Mock database get_document for scoped docs
+    def mock_get_doc(doc_id):
+        if doc_id == "doc_bert":
+            return {"document_id": "doc_bert", "filename": "BERT_LSTM.pdf"}
+        elif doc_id == "doc_lstm":
+            return {"document_id": "doc_lstm", "filename": "LSTM_CNN+GRU.pdf"}
+        return None
+    monkeypatch.setattr("app.services.document_manager.get_document", mock_get_doc)
+
+    expected_answer = "Gradient descent iteratively updates parameters in the direction of steepest descent to minimize a loss function."
+
+    class MockLLM(Runnable):
+        def invoke(self, input, config=None, **kwargs):
+            return expected_answer
+
+        def with_structured_output(self, schema):
+            if schema == RouteDecision:
+                # Initially routes to pdf_rag as in the repro
+                return RunnableLambda(lambda x: RouteDecision(route="pdf_rag", reasoning="User has scoped documents"))
+            elif schema == QueryDecomposition:
+                return RunnableLambda(lambda x: QueryDecomposition(is_complex=False, sub_queries=["explain gradient descent"]))
+            elif schema == DocumentGrade:
+                # Fails relevance grading (not covered in uploaded papers)
+                return RunnableLambda(lambda x: DocumentGrade(relevance="no", explanation="Not found in papers"))
+            elif schema == QueryRewrite:
+                return RunnableLambda(lambda x: QueryRewrite(rewritten_query="gradient descent optimization algorithm"))
+            elif schema == GroundingCheck:
+                return RunnableLambda(lambda x: GroundingCheck(grounded=True, unsupported_claims=[]))
+            return RunnableLambda(lambda x: MagicMock())
+
+    monkeypatch.setattr("app.agent.nodes.model", MockLLM())
+    monkeypatch.setattr("app.agent.nodes.retrieve", lambda **kwargs: [
+        Document(page_content="Unrelated text about LSTM.", metadata={"document_id": "doc_lstm", "filename": "LSTM_CNN+GRU.pdf", "page": 1})
+    ])
+
+    result = run_agent(
+        question="explain gradient descent",
+        conversation_id=1,
+        user_id=1,
+        document_ids=["doc_bert", "doc_lstm"]
+    )
+
+    assert mock_wiki.call_count >= 1
+    assert result["grounded"] is True
+    assert result["answer"] == expected_answer
+    assert "I encountered an error" not in result["answer"]
+    assert any("Searched Wikipedia" in step for step in result["trace"])
+    assert any("Grounding check: PASSED" in step for step in result["trace"])
+
+
+# ==========================================
+# 9. Unit Test: Bug B - Grounding Check Logic (0 Unsupported Claims = PASSED)
+# ==========================================
+def test_grounding_check_passes_with_zero_unsupported_claims(monkeypatch):
+    """
+    Test Bug B: When the grounder LLM returns 0 unsupported claims,
+    the graph MUST treat this as PASSED (grounded=True) and NOT trigger regeneration,
+    even if the schema's grounded field was returned as False.
+    """
+    from langchain_core.runnables import Runnable, RunnableLambda
+    from app.agent.nodes import grounding_check_node
+
+    state = {
+        "question": "what is gradient descent?",
+        "answer": "Gradient descent is an optimization algorithm.",
+        "external_context": "Gradient descent is an optimization algorithm used to minimize functions.",
+        "documents": [],
+        "trace": [],
+    }
+
+    class MockCheckLLM(Runnable):
+        def __init__(self, check_obj):
+            self.check_obj = check_obj
+
+        def invoke(self, input, config=None, **kwargs):
+            return self.check_obj
+
+        def with_structured_output(self, schema):
+            return RunnableLambda(lambda x: self.check_obj)
+
+    # Case 1: LLM returns grounded=True, unsupported_claims=[]
+    monkeypatch.setattr(
+        "app.agent.nodes.model",
+        MockCheckLLM(GroundingCheck(grounded=True, unsupported_claims=[]))
+    )
+    res1 = grounding_check_node(state.copy())
+    assert res1["grounded"] is True
+    assert "Grounding check: PASSED" in res1["trace"][-1]
+    assert grounding_branch(res1) == "end"
+
+    # Case 2: LLM returns grounded=False but unsupported_claims=[] (schema default / LLM anomaly)
+    monkeypatch.setattr(
+        "app.agent.nodes.model",
+        MockCheckLLM(GroundingCheck(grounded=False, unsupported_claims=[]))
+    )
+    res2 = grounding_check_node(state.copy())
+    assert res2["grounded"] is True
+    assert "Grounding check: PASSED" in res2["trace"][-1]
+    assert "FAILED" not in res2["trace"][-1]
+    assert grounding_branch(res2) == "end"
+
+
+# ==========================================
+# 10. Unit Test: Bug C (a) - Sub-query Decomposition Maps Generic Doc References
+# ==========================================
+def test_decompose_query_resolves_generic_doc_references(monkeypatch):
+    """
+    Test Bug C (a): When documents are scoped and the user refers to 'doc A' and 'doc B',
+    decompose_query_node resolves generic references to the actual scoped filenames
+    in sub_queries, leaving no literal 'doc A' or 'doc B'.
+    """
+    from langchain_core.runnables import Runnable, RunnableLambda
+    from app.agent.nodes import decompose_query_node
+
+    scoped_docs = [
+        {"id": "doc_1", "filename": "BERT_LSTM.pdf"},
+        {"id": "doc_2", "filename": "LSTM_CNN+GRU.pdf"},
+    ]
+    state = {
+        "question": "compare the methodology in doc A and doc B",
+        "scoped_documents": scoped_docs,
+        "trace": [],
+    }
+
+    class MockDecompLLM(Runnable):
+        def invoke(self, input, config=None, **kwargs):
+            return ""
+
+        def with_structured_output(self, schema):
+            return RunnableLambda(
+                lambda x: QueryDecomposition(
+                    is_complex=True,
+                    sub_queries=["methodology in doc A", "methodology in doc B"]
+                )
+            )
+
+    # Simulate decomposer LLM producing sub-queries that might still have doc A / doc B
+    monkeypatch.setattr("app.agent.nodes.model", MockDecompLLM())
+
+    result = decompose_query_node(state)
+    sub_queries = result["sub_queries"]
+
+    assert len(sub_queries) == 2
+    # Must contain the actual filenames
+    assert any("BERT_LSTM.pdf" in sq for sq in sub_queries)
+    assert any("LSTM_CNN+GRU.pdf" in sq for sq in sub_queries)
+    # Must NOT contain literal "doc A" or "doc B"
+    for sq in sub_queries:
+        assert "doc A" not in sq
+        assert "doc B" not in sq
+
+
+# ==========================================
+# 11. Unit Test: Bug C (b) - Scoped Comparison Guardrail Suppresses Fallback
+# ==========================================
+def test_scoped_comparison_guardrail_suppresses_fallback(monkeypatch):
+    """
+    Test Bug C (b): When comparing scoped documents and rewrites are exhausted,
+    the agent MUST NOT fall back to Wikipedia or arXiv.
+    Instead, it returns the guardrail guidance message.
+    """
+    from unittest.mock import MagicMock
+    from langchain_core.runnables import Runnable, RunnableLambda
+    from app.agent.graph import run_agent
+
+    mock_wiki = MagicMock()
+    mock_arxiv = MagicMock()
+    monkeypatch.setattr("app.agent.nodes.wikipedia_tool", mock_wiki)
+    monkeypatch.setattr("app.agent.nodes.arxiv_tool", mock_arxiv)
+
+    monkeypatch.setattr("app.services.conversation_manager.get_conversation_history", lambda cid: [])
+    monkeypatch.setattr("app.services.conversation_manager.save_conversation", lambda **kwargs: None)
+
+    def mock_get_doc(doc_id):
+        if doc_id == "doc_bert":
+            return {"document_id": "doc_bert", "filename": "BERT_LSTM.pdf"}
+        elif doc_id == "doc_lstm":
+            return {"document_id": "doc_lstm", "filename": "LSTM_CNN+GRU.pdf"}
+        return None
+    monkeypatch.setattr("app.services.document_manager.get_document", mock_get_doc)
+
+    class MockLLM(Runnable):
+        def invoke(self, input, config=None, **kwargs):
+            return "Some response"
+
+        def with_structured_output(self, schema):
+            if schema == RouteDecision:
+                return RunnableLambda(lambda x: RouteDecision(route="pdf_rag", reasoning="Compare scoped documents"))
+            elif schema == QueryDecomposition:
+                return RunnableLambda(lambda x: QueryDecomposition(
+                    is_complex=True,
+                    sub_queries=["methodology in BERT_LSTM.pdf", "methodology in LSTM_CNN+GRU.pdf"]
+                ))
+            elif schema == DocumentGrade:
+                # Grading struggles/fails
+                return RunnableLambda(lambda x: DocumentGrade(relevance="no", explanation="Insufficient methodology details"))
+            elif schema == QueryRewrite:
+                return RunnableLambda(lambda x: QueryRewrite(rewritten_query="deep learning architecture methodology"))
+            return RunnableLambda(lambda x: MagicMock())
+
+    monkeypatch.setattr("app.agent.nodes.model", MockLLM())
+    monkeypatch.setattr("app.agent.nodes.retrieve", lambda **kwargs: [
+        Document(page_content="Brief intro without methodology.", metadata={"document_id": "doc_bert", "filename": "BERT_LSTM.pdf", "page": 1})
+    ])
+
+    result = run_agent(
+        question="compare the methodology in doc A and doc B",
+        conversation_id=1,
+        user_id=1,
+        document_ids=["doc_bert", "doc_lstm"]
+    )
+
+    # Wikipedia and arXiv must NEVER be called for scoped document comparison
+    assert mock_wiki.call_count == 0
+    assert mock_arxiv.call_count == 0
+
+    # Guardrail message returned
+    expected_guardrail = "I found content from both scoped documents but couldn't confidently compare their methodology — try rephrasing with more specific terms, or ask about each document separately."
+    assert result["answer"] == expected_guardrail
+    assert any("Guardrail" in step for step in result["trace"])
+
+
 

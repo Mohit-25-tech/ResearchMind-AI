@@ -10,7 +10,8 @@ class AgentState(TypedDict):
     chat_history: List[Dict[str, str]]
     user_id: int
     document_ids: Optional[Union[List[str], str]]
-    route: str  # "pdf_rag" | "arxiv" | "wikipedia" | "direct"
+    scoped_documents: List[Dict[str, str]]  # [{"id": "...", "filename": "..."}]
+    route: str  # "pdf_rag" | "arxiv" | "wikipedia" | "direct" | "guardrail"
     sub_queries: List[str]
     current_query: str
     documents: List[Document]

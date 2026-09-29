@@ -53,10 +53,12 @@ def grade_branch(state: AgentState) -> Literal["generate", "rewrite_query", "fal
     return "fallback"
 
 
-def fallback_branch(state: AgentState) -> Literal["arxiv", "wikipedia"]:
+def fallback_branch(state: AgentState) -> Literal["arxiv", "wikipedia", "guardrail"]:
     """
-    Branch from fallback node to either arXiv or Wikipedia.
+    Branch from fallback node to either arXiv, Wikipedia, or stop at guardrail.
     """
+    if state.get("route") == "guardrail":
+        return "guardrail"
     if state.get("route") == "arxiv":
         return "arxiv"
     return "wikipedia"
@@ -157,6 +159,7 @@ def build_agent_graph():
         {
             "arxiv": "arxiv",
             "wikipedia": "wikipedia",
+            "guardrail": END,
         }
     )
 
@@ -211,10 +214,20 @@ def run_agent(
     Execute the agent graph synchronously, save conversation, and return answer + sources + trace.
     """
     from app.services.conversation_manager import get_conversation_history, save_conversation
+    from app.services.document_manager import get_document
 
     target_docs = document_ids if document_ids is not None else document_id
     if isinstance(target_docs, str):
         target_docs = [x.strip() for x in target_docs.split(",") if x.strip()]
+
+    scoped_documents = []
+    if target_docs:
+        for doc_id in target_docs:
+            doc_rec = get_document(doc_id)
+            if doc_rec and doc_rec.get("filename"):
+                scoped_documents.append({"id": doc_id, "document_id": doc_id, "filename": doc_rec["filename"]})
+            else:
+                scoped_documents.append({"id": doc_id, "document_id": doc_id, "filename": doc_id})
 
     history = get_conversation_history(conversation_id)
     state: AgentState = {
@@ -222,6 +235,7 @@ def run_agent(
         "chat_history": history,
         "user_id": user_id,
         "document_ids": target_docs,
+        "scoped_documents": scoped_documents,
         "route": "",
         "sub_queries": [],
         "current_query": question,
@@ -271,10 +285,20 @@ async def stream_agent(
     """
     import json
     from app.services.conversation_manager import get_conversation_history, save_conversation
+    from app.services.document_manager import get_document
 
     target_docs = document_ids if document_ids is not None else document_id
     if isinstance(target_docs, str):
         target_docs = [x.strip() for x in target_docs.split(",") if x.strip()]
+
+    scoped_documents = []
+    if target_docs:
+        for doc_id in target_docs:
+            doc_rec = get_document(doc_id)
+            if doc_rec and doc_rec.get("filename"):
+                scoped_documents.append({"id": doc_id, "document_id": doc_id, "filename": doc_rec["filename"]})
+            else:
+                scoped_documents.append({"id": doc_id, "document_id": doc_id, "filename": doc_id})
 
     history = get_conversation_history(conversation_id)
     state: AgentState = {
@@ -282,6 +306,7 @@ async def stream_agent(
         "chat_history": history,
         "user_id": user_id,
         "document_ids": target_docs,
+        "scoped_documents": scoped_documents,
         "route": "",
         "sub_queries": [],
         "current_query": question,
@@ -326,6 +351,7 @@ async def stream_agent(
                 if isinstance(final_output, dict):
                     if not complete_answer and final_output.get("answer"):
                         complete_answer = final_output.get("answer")
+                        yield json.dumps({"type": "token", "content": complete_answer}) + "\n"
                     sources = final_output.get("sources", [])
                     trace = final_output.get("trace", [])
 

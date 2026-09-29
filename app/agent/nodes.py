@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, Field
 from langchain_core.documents import Document
@@ -58,16 +59,68 @@ class QueryRewrite(BaseModel):
 
 class GroundingCheck(BaseModel):
     """Verification of factual grounding in provided context."""
-    grounded: bool = Field(description="True if every claim in the answer is backed by context, False otherwise.")
+    grounded: bool = Field(
+        default=True,
+        description="True if every claim in the answer is backed by context, False if there are unsupported claims."
+    )
     unsupported_claims: List[str] = Field(
         default_factory=list,
-        description="List of specific claims in the answer that are NOT supported by the context."
+        description="List of specific claims in the answer that are NOT supported by the context. Empty if all claims are supported."
     )
 
 
 # ==========================================
-# Node Implementations
+# Helpers for Scoped Documents & Comparison
 # ==========================================
+def format_scoped_documents_prompt(scoped_docs: Optional[List[Dict[str, str]]]) -> str:
+    """
+    Format scoped documents into clear reference guidelines for prompts.
+    """
+    if not scoped_docs:
+        return ""
+    lines = ["The user has scoped this conversation to these documents, in order:"]
+    for idx, doc in enumerate(scoped_docs, start=1):
+        letter = chr(ord('A') + idx - 1)
+        fname = doc.get("filename", f"document_{idx}.pdf")
+        lines.append(f"{idx}) {fname} (referred to as 'doc {letter}', 'doc {idx}', 'paper {letter}', or 'the {idx} paper')")
+    lines.append(
+        "When the user refers to 'doc A', 'doc B', 'doc 1', 'doc 2', 'the first paper', 'these papers', etc., "
+        "resolve this to the scoped documents in the order listed above."
+    )
+    return "\n".join(lines)
+
+
+def is_scoped_comparison_query(question: str, scoped_docs: Optional[List[Dict[str, str]]]) -> bool:
+    """
+    Detect whether the question is comparing or querying scoped documents directly.
+    """
+    if not scoped_docs or len(scoped_docs) < 1:
+        return False
+    q = question.lower()
+    has_doc_ref = any(
+        ref in q
+        for ref in [
+            "doc a", "doc b", "doc 1", "doc 2", "doc_a", "doc_b",
+            "paper a", "paper b", "paper 1", "paper 2",
+            "first paper", "second paper", "both papers", "these papers",
+            "the two papers", "two papers", "these documents", "the documents",
+            "uploaded", "my document", "my paper", "my papers"
+        ]
+    )
+    has_comparison = any(
+        term in q
+        for term in [
+            "compare", "comparison", "difference", "differ", "versus", "vs", "vs.",
+            "contrast", "better than", "outperform", "relative to"
+        ]
+    )
+    has_filename = any(
+        doc.get("filename", "").lower() in q
+        for doc in scoped_docs
+        if doc.get("filename")
+    )
+    return has_doc_ref or (has_comparison and (len(scoped_docs) >= 2 or has_filename))
+
 
 # ==========================================
 # External Context Prompt Template
@@ -104,28 +157,33 @@ def route_query_node(state: AgentState) -> Dict[str, Any]:
     'pdf_rag', 'arxiv', 'wikipedia', 'direct'.
     """
     question = state["question"]
-    logger.info("Node: route_query for question: %s", question)
+    scoped_docs = state.get("scoped_documents", [])
+    logger.info("Node: route_query for question: %s (scoped: %s)", question, scoped_docs)
+    scoped_prompt = format_scoped_documents_prompt(scoped_docs)
+
     system_prompt = (
         "You are an expert intent router for an AI research assistant workspace.\n"
         "Analyze the user's question and conversation history to select the single best route:\n\n"
-        "- 'wikipedia': For general definitions, conceptual explanations, algorithms, history, or encyclopedic knowledge.\n"
+        f"{scoped_prompt}\n\n"
+        "- 'pdf_rag': For questions about the user's uploaded document(s), findings, specific data, sections, or comparative analysis of files.\n"
+        "  CRITICAL: If the question references 'doc A', 'doc B', 'doc 1', 'doc 2', 'these papers', or asks to compare the scoped documents, ALWAYS choose 'pdf_rag'.\n"
+        "  Examples:\n"
+        "  * 'compare the methodology in doc A and doc B' -> pdf_rag\n"
+        "  * 'what is the main conclusion of the paper?' -> pdf_rag\n"
+        "  * 'summarize the results table in my uploaded document' -> pdf_rag\n"
+        "  * 'what dataset was used in this study?' -> pdf_rag\n\n"
+        "- 'wikipedia': For general definitions, conceptual explanations, algorithms, history, or encyclopedic knowledge NOT specific to the user's uploaded documents.\n"
         "  Examples:\n"
         "  * 'what is BM25?' -> wikipedia\n"
         "  * 'what is a transformer model' -> wikipedia\n"
         "  * 'explain RAG' -> wikipedia\n"
         "  * 'who invented BM25' -> wikipedia\n"
         "  * 'define gradient descent' -> wikipedia\n\n"
-        "- 'arxiv': For discovering research papers, broad scientific literature, recent publications, or academic trends.\n"
+        "- 'arxiv': For discovering research papers, broad scientific literature, recent publications, or academic trends NOT in local docs.\n"
         "  Examples:\n"
         "  * 'find recent papers on LoRA fine-tuning' -> arxiv\n"
         "  * 'what are recent publications on multi-modal agents?' -> arxiv\n"
         "  * 'papers on deep learning for protein folding' -> arxiv\n\n"
-        "- 'pdf_rag': For questions about the user's uploaded document(s), findings, specific data, sections, or comparative analysis of files.\n"
-        "  Examples:\n"
-        "  * 'what is the main conclusion of the paper?' -> pdf_rag\n"
-        "  * 'summarize the results table in my uploaded document' -> pdf_rag\n"
-        "  * 'how does document A compare to document B?' -> pdf_rag\n"
-        "  * 'what dataset was used in this study?' -> pdf_rag\n\n"
         "- 'direct': For greetings, conversational remarks, chit-chat, or questions answerable purely from prior conversation history.\n"
         "  Examples:\n"
         "  * 'hello', 'hi there' -> direct\n"
@@ -142,7 +200,7 @@ def route_query_node(state: AgentState) -> Dict[str, Any]:
         raw_output = decision.model_dump()
         reasoning = decision.reasoning
     except Exception as e:
-        logger.error("Routing failed: %s. Defaulting to 'pdf_rag'.", e)
+        logger.error("Routing failed: %s. Defaulting to 'pdf_rag'.", e, exc_info=True)
         route = "pdf_rag"
         raw_output = {"error": str(e)}
         reasoning = "Fallback default on exception"
@@ -257,31 +315,52 @@ def wikipedia_node(state: AgentState) -> Dict[str, Any]:
 def decompose_query_node(state: AgentState) -> Dict[str, Any]:
     """
     Analyze if the question is multi-part or comparison; produce up to 3 sub-queries.
+    Maps generic references ('doc A', 'doc B', 'first paper', etc.) to actual scoped filenames.
     """
     question = state["question"]
-    doc_ids = state.get("document_ids")
-    logger.info("Node: decompose_query for question: %s (scoped doc_ids: %s)", question, doc_ids)
-    
+    scoped_docs = state.get("scoped_documents", [])
+    logger.info("Node: decompose_query for question: %s (scoped: %s)", question, scoped_docs)
+
+    scoped_prompt = format_scoped_documents_prompt(scoped_docs)
     system_prompt = (
         "You are an expert query decomposer for an AI research workspace.\n"
-        "If the user's question compares two concepts or documents (e.g., 'compare X in doc A vs doc B', "
-        "or 'how does method 1 compare to method 2'), or contains distinct multi-part sub-questions, "
-        "break it down into up to 3 focused sub-queries so retrieval covers each aspect.\n"
-        "If it is a single focused inquiry, return just the original question in sub_queries."
+        "Analyze the user's question and break it into up to 3 focused search sub-queries.\n\n"
+        f"{scoped_prompt}\n\n"
+        "CRITICAL RULES FOR SCOPED DOCUMENTS AND COMPARISONS:\n"
+        "1. When the question implies a comparison ('compare', 'vs', 'difference between', 'both papers', 'doc A/B/1/2'), "
+        "you MUST map generic references ('doc A', 'doc B', 'doc 1', 'doc 2', 'first paper', 'second paper', 'these two papers') "
+        "to the actual scoped filenames when generating sub-queries.\n"
+        "   Example: If user asks 'compare the methodology in doc A and doc B' and scoped docs are [BERT_LSTM.pdf, LSTM_CNN+GRU.pdf]:\n"
+        "   sub_queries: ['methodology in BERT_LSTM.pdf', 'methodology in LSTM_CNN+GRU.pdf']\n"
+        "2. NEVER leave literal 'doc A' or 'doc B' in sub_queries; ALWAYS resolve them to the actual scoped filename.\n"
+        "3. If the inquiry is a single focused question, return the question with any generic references resolved to the document filename."
     )
     decomposer_llm = model.with_structured_output(QueryDecomposition)
     try:
-        context_msg = f"Question: {question}"
-        if doc_ids:
-            context_msg += f"\nActive scoped document IDs: {doc_ids}"
         decomp = decomposer_llm.invoke([
             SystemMessage(content=system_prompt),
-            HumanMessage(content=context_msg)
+            HumanMessage(content=f"Question: {question}")
         ])
         sub_queries = decomp.sub_queries if decomp.sub_queries else [question]
     except Exception as e:
-        logger.error("Decomposition failed: %s. Using original question.", e)
+        logger.error("Decomposition failed: %s. Using original question.", e, exc_info=True)
         sub_queries = [question]
+
+    # Post-processing safeguard: replace literal 'doc a' / 'doc b' if LLM missed it
+    if scoped_docs:
+        resolved_sub_queries = []
+        for sq in sub_queries:
+            resolved_sq = sq
+            for idx, doc in enumerate(scoped_docs, start=1):
+                letter = chr(ord('A') + idx - 1)
+                fname = doc.get("filename", "")
+                if fname:
+                    resolved_sq = re.sub(rf"\bdoc[ _]?{letter}\b", fname, resolved_sq, flags=re.IGNORECASE)
+                    resolved_sq = re.sub(rf"\bpaper[ _]?{letter}\b", fname, resolved_sq, flags=re.IGNORECASE)
+                    resolved_sq = re.sub(rf"\bdoc[ _]?{idx}\b", fname, resolved_sq, flags=re.IGNORECASE)
+                    resolved_sq = re.sub(rf"\bpaper[ _]?{idx}\b", fname, resolved_sq, flags=re.IGNORECASE)
+            resolved_sub_queries.append(resolved_sq)
+        sub_queries = resolved_sub_queries
 
     sub_queries = sub_queries[:3]
     logger.info("[AGENT_DEBUG] decompose_query: is_complex=%s | sub_queries=%s", len(sub_queries) > 1, sub_queries)
@@ -333,6 +412,7 @@ def retrieve_node(state: AgentState) -> Dict[str, Any]:
 def grade_documents_node(state: AgentState) -> Dict[str, Any]:
     """
     LLM strictly evaluates whether retrieved chunks contain relevant information to answer the question.
+    Chunks are tagged with their source Document name and Page number.
     """
     logger.info("Node: grade_documents")
     docs = state.get("documents", [])
@@ -343,15 +423,30 @@ def grade_documents_node(state: AgentState) -> Dict[str, Any]:
             "trace": state.get("trace", []) + ["Grading: No documents found (NO)"]
         }
 
-    context = build_context(docs)
+    # Tag each chunk with its source document name and page number
+    tagged_chunks = []
+    for i, doc in enumerate(docs, 1):
+        fname = doc.metadata.get("source") or doc.metadata.get("filename") or "Unknown Document"
+        page = doc.metadata.get("page", 0)
+        tagged_chunks.append(f"[Chunk {i}] Document: {fname} (Page {page}):\n{doc.page_content}")
+    context = "\n\n".join(tagged_chunks)
+
+    scoped_docs = state.get("scoped_documents", [])
+    scoped_prompt = format_scoped_documents_prompt(scoped_docs)
+
     grader_llm = model.with_structured_output(DocumentGrade)
     system_prompt = (
         "You are a strict, objective document relevance grader.\n"
-        "Assess whether the retrieved document context contains substantive, factual information that directly answers or helps answer the user's question.\n\n"
+        "Assess whether the retrieved document chunks contain substantive, factual information to answer the user's question.\n\n"
+        f"{scoped_prompt}\n\n"
         "Grading Rubric:\n"
-        "- Grade 'yes' ONLY if the context explicitly mentions or explains the specific concept, entity, or topic queried.\n"
+        "- Each chunk is tagged with its source Document filename and Page.\n"
+        "- When the user's question compares scoped documents (e.g. 'doc A vs doc B', 'compare both papers'), "
+        "evaluate if the retrieved context contains substantive information from the referenced scoped documents to address the comparison. "
+        "If there are relevant chunks addressing the queried aspects of the documents, grade 'yes'.\n"
+        "- Grade 'yes' if the context contains substantive information answering the question.\n"
         "- Grade 'no' if the context is unrelated, or if it merely shares generic terminology without addressing the user's inquiry.\n"
-        "- For example, if the question asks 'what is BM25?' and the context discusses LSTM or CNN models without explaining or defining BM25, you MUST grade 'no'."
+        "- For example, if the question asks 'what is BM25?' and the context discusses LSTM without explaining BM25, grade 'no'."
     )
     try:
         grade = grader_llm.invoke([
@@ -361,7 +456,7 @@ def grade_documents_node(state: AgentState) -> Dict[str, Any]:
         relevance = grade.relevance
         explanation = grade.explanation
     except Exception as e:
-        logger.error("Grading failed: %s. Defaulting to 'no'.", e)
+        logger.error("Grading failed: %s. Defaulting to 'no'.", e, exc_info=True)
         relevance = "no"
         explanation = "Grading failed, defaulting to 'no' for safety"
 
@@ -396,7 +491,7 @@ def rewrite_query_node(state: AgentState) -> Dict[str, Any]:
         ])
         rewritten = res.rewritten_query
     except Exception as e:
-        logger.error("Rewriting failed: %s", e)
+        logger.error("Rewriting failed: %s", e, exc_info=True)
         rewritten = current_q
 
     logger.info(
@@ -421,10 +516,14 @@ def generate_node(state: AgentState) -> Dict[str, Any]:
     docs = state.get("documents", [])
     ext_context = (state.get("external_context") or "").strip()
     history_text = build_history(state.get("chat_history", []))
+    scoped_docs = state.get("scoped_documents", [])
+    scoped_prompt = format_scoped_documents_prompt(scoped_docs)
 
     # Case 1: Answering from uploaded documents
     if docs:
         context_str = build_context(docs)
+        if scoped_prompt:
+            context_str = f"{scoped_prompt}\n\n{context_str}"
         sources = extract_sources(docs)
         rag_chain = rag_prompt | model | StrOutputParser()
         try:
@@ -434,7 +533,7 @@ def generate_node(state: AgentState) -> Dict[str, Any]:
                 "question": state["question"],
             })
         except Exception as e:
-            logger.error("Generation failed: %s", e)
+            logger.error("Generation failed: %s", e, exc_info=True)
             answer = "I encountered an error generating the answer. Please try again."
 
     # Case 2: Answering from external context (Wikipedia / arXiv)
@@ -449,8 +548,18 @@ def generate_node(state: AgentState) -> Dict[str, Any]:
                 "question": state["question"],
             })
         except Exception as e:
-            logger.error("External generation failed: %s", e)
-            answer = "I encountered an error generating the external answer. Please try again."
+            logger.error("External generation failed with error: %s", e, exc_info=True)
+            # Retry with clean direct prompt to recover if it was a chain formatting glitch
+            try:
+                fallback_prompt = (
+                    f"Answer the user's question clearly and factually using only this external context:\n\n"
+                    f"{context_str}\n\nQuestion: {state['question']}\n\nAnswer:"
+                )
+                res = model.invoke(fallback_prompt)
+                answer = res.content if hasattr(res, "content") else str(res)
+            except Exception as e2:
+                logger.error("Retry external generation also failed: %s", e2, exc_info=True)
+                answer = "I encountered an error generating the external answer. Please try again."
 
     # Case 3: Both document retrieval and external tools found nothing
     else:
@@ -476,6 +585,14 @@ def grounding_check_node(state: AgentState) -> Dict[str, Any]:
     context_str = build_context(docs) if docs else (state.get("external_context") or "").strip()
     answer_text = state.get("answer", "")
 
+    # If the answer is an error message, it must fail grounding check
+    if "i encountered an error" in answer_text.lower():
+        logger.warning("[AGENT_DEBUG] grounding_check: Detected generation error in answer -> FAILED")
+        return {
+            "grounded": False,
+            "trace": state.get("trace", []) + ["Grounding check: FAILED (Generation error)"]
+        }
+
     # Skip grounding check for refusals or empty contexts
     if not context_str or "isn't covered in your documents" in answer_text.lower() or "couldn't find that information" in answer_text.lower():
         logger.info("[AGENT_DEBUG] grounding_check: Skipped for refusal/empty context")
@@ -488,17 +605,22 @@ def grounding_check_node(state: AgentState) -> Dict[str, Any]:
     system_prompt = (
         "You are an auditor verifying factual consistency.\n"
         "Check if every statement in the generated answer is supported by the context.\n"
-        "If there are hallucinated facts or ungrounded assertions, set grounded=False and list the unsupported claims."
+        "If there are hallucinated facts or ungrounded assertions, set grounded=False and list the unsupported claims.\n"
+        "If all statements in the answer are supported by the context, leave unsupported_claims as an empty list and set grounded=True."
     )
     try:
         check = checker_llm.invoke([
             SystemMessage(content=system_prompt),
             HumanMessage(content=f"Context:\n{context_str}\n\nAnswer:\n{answer_text}")
         ])
-        is_grounded = check.grounded
-        claims = check.unsupported_claims
+        claims = [c.strip() for c in (check.unsupported_claims or []) if c.strip()]
+        # Zero unsupported claims means the answer is factually grounded
+        if len(claims) == 0:
+            is_grounded = True
+        else:
+            is_grounded = False
     except Exception as e:
-        logger.error("Grounding check failed: %s. Assuming grounded.", e)
+        logger.error("Grounding check failed: %s. Assuming grounded.", e, exc_info=True)
         is_grounded = True
         claims = []
 
@@ -537,7 +659,7 @@ def regenerate_node(state: AgentState) -> Dict[str, Any]:
         response = model.invoke(stricter_prompt)
         answer = response.content if hasattr(response, "content") else str(response)
     except Exception as e:
-        logger.error("Regeneration failed: %s", e)
+        logger.error("Regeneration failed: %s", e, exc_info=True)
         answer = state.get("answer", "")
 
     count = state.get("regenerate_count", 0) + 1
@@ -554,16 +676,32 @@ def regenerate_node(state: AgentState) -> Dict[str, Any]:
 def fallback_node(state: AgentState) -> Dict[str, Any]:
     """
     Fallback after query rewrites are exhausted:
-    Route to arXiv if question is research/academic-paper-seeking, otherwise Wikipedia.
+    Guardrail: If the question is about scoped documents or a comparison between them,
+    do NOT fall back to external tools (Wikipedia/arXiv). Instead, return a clear guidance message.
+    Otherwise, route to arXiv if research/paper seeking, else Wikipedia.
     """
     logger.info("Node: fallback_node")
-    q = state["question"].lower()
-    is_research = any(w in q for w in ["paper", "study", "arxiv", "literature", "publication", "proceedings", "conference", "journal"])
+    scoped_docs = state.get("scoped_documents", [])
+    q = state["question"]
+
+    # Guardrail for scoped document comparison / questions
+    if is_scoped_comparison_query(q, scoped_docs):
+        logger.info("[AGENT_DEBUG] fallback_node: Guardrail triggered for scoped document query. Suppressing external fallback.")
+        return {
+            "answer": "I found content from both scoped documents but couldn't confidently compare their methodology — try rephrasing with more specific terms, or ask about each document separately.",
+            "route": "guardrail",
+            "grounded": True,
+            "sources": state.get("sources", []),
+            "trace": state.get("trace", []) + ["Guardrail: Scoped document query exhausted rewrites; suppressed external fallback"]
+        }
+
+    q_lower = q.lower()
+    is_research = any(w in q_lower for w in ["paper", "study", "arxiv", "literature", "publication", "proceedings", "conference", "journal"])
 
     route = "arxiv" if is_research else "wikipedia"
     logger.info(
         "[AGENT_DEBUG] fallback_node: routing to %s for question '%s' (rewrite_count=%d)",
-        route, state["question"], state.get("rewrite_count", 0)
+        route, q, state.get("rewrite_count", 0)
     )
     return {
         "route": route,
