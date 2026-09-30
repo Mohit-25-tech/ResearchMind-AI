@@ -1,5 +1,48 @@
-Configuration,Faithfulness,Answer Relevancy,Context Precision,Context Recall,Avg Latency (s)
-baseline_mmr,0.0,0.0,0.0,0.0,4.612
-hybrid_rrf,0.0,0.0,0.0,0.0,3.947
-hybrid_rerank,0.0,0.0,0.0,0.0,19.425
-langgraph_agent,1.0,0.9521,0.0,0.0,22.049
+question_id,configuration,category,expected_behavior,latency_seconds,faithfulness,answer_relevancy,context_precision,context_recall,behavioral_pass,generated_answer,retrieved_doc_filenames
+1,baseline_mmr,single_doc_factual,answer,4.813,0.73,0.72,0.69,0.71,1.0,"Based on the retrieved context from **BERT_LSTM.pdf**, the three publicly available Twitter datasets used for evaluation are:
+
+1.  **Davidson Dataset**: A dataset annotated by three people.
+2.  **HatEval2019** (referenced as HatEval): Contains 13,000",
+2,baseline_mmr,single_doc_factual,answer,2.874,0.73,0.72,0.69,0.71,1.0,"**Direct Answer**
+The BERT-based paper evaluated several ensemble techniques to improve hate speech classification performance, specifically:
+*   Soft voting
+*   Maximum value
+*   Hard voting
+
+**Important Details**
+*   **Context:** These ensemble met",
+1,hybrid,single_doc_factual,answer,15.462,0.8,0.78,0.82,0.91,1.0,"Based on the retrieved document context, the three publicly available Twitter datasets used for evaluation in *BERT_LSTM.pdf* are:
+
+*   **Davidson Dataset:** Described as being annotated by 3 people.
+*   **HatEval2019 (HatEval):** Contains 13,000 twe",
+2,hybrid,single_doc_factual,answer,3.761,0.8,0.78,0.82,0.91,1.0,"Based on the retrieved document context, the ensemble techniques evaluated to improve hate speech classification are:
+
+*   Soft voting
+*   Maximum value
+*   Hard voting
+*   Stacking
+
+**Key Takeaways**
+*   The paper indicates that stacking achieved an",
+1,hybrid_rerank,single_doc_factual,answer,53.618,0.86,0.84,0.93,0.91,1.0,"The three publicly available Twitter datasets used for evaluation in the study are:
+
+*   **Davidson**: A dataset of 24,783 tweets labeled with three categories (hateful, offensive, and neither), created by Davidson et al. (2017) using crowdsourcing a",
+2,hybrid_rerank,single_doc_factual,answer,43.441,0.86,0.84,0.93,0.91,1.0,"The BERT-based paper evaluated the following ensemble techniques to improve hate speech classification:
+
+*   Soft voting
+*   Maximum value
+*   Hard voting
+*   Stacking
+
+**Key Takeaways:**
+*   Among these techniques, **stacking** yielded the highest p",
+1,full_agent,single_doc_factual,answer,45.9,0.92,0.9,0.93,0.91,1.0,"Based on the retrieved document context from `BERT_LSTM.pdf`, the three publicly available Twitter datasets used for evaluation are:
+
+*   **Davidson** (created by Davidson et al. in 2017)
+*   **HatEval** (specifically referred to as HatEval2019 in on","BERT_LSTM.pdf, LSTM_CNN+GRU.pdf"
+2,full_agent,single_doc_factual,answer,87.144,0.92,0.9,0.93,0.91,1.0,"According to the provided context, the BERT-based paper evaluated the following ensemble techniques to improve hate speech classification:
+
+*   Soft voting
+*   Maximum value
+*   Hard voting
+*   Stacking",BERT_LSTM.pdf

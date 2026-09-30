@@ -618,4 +618,66 @@ def test_scoped_comparison_guardrail_suppresses_fallback(monkeypatch):
     assert any("Guardrail" in step for step in result["trace"])
 
 
+# ==========================================
+# 12. Unit Test: Generate Ignores Unrelated Prior History Topic
+# ==========================================
+def test_generate_node_ignores_unrelated_prior_topic(monkeypatch):
+    """
+    Test that when chat_history contains a Q&A about topic X (e.g. BM25),
+    and the current question is about topic Y (e.g. difference between scoped documents),
+    the generate prompt explicitly isolates chat_history as background reference only,
+    and the generated answer does not mention or disclaim topic X.
+    """
+    from app.agent.nodes import generate_node
+    from langchain_core.runnables import Runnable
+
+    topic_x = "BM25"
+    topic_y = "what's different between these two??"
+
+    state = {
+        "question": topic_y,
+        "chat_history": [
+            {"question": f"what is {topic_x}?", "answer": f"{topic_x} is a ranking algorithm."}
+        ],
+        "documents": [
+            Document(page_content="Document A uses an LSTM encoder.", metadata={"filename": "docA.pdf"}),
+            Document(page_content="Document B uses a Transformer encoder.", metadata={"filename": "docB.pdf"}),
+        ],
+        "scoped_documents": [
+            {"id": "doc_1", "filename": "docA.pdf"},
+            {"id": "doc_2", "filename": "docB.pdf"},
+        ],
+        "trace": [],
+    }
+
+    captured_prompts = []
+
+    class MockPromptCapturingLLM(Runnable):
+        def invoke(self, input, config=None, **kwargs):
+            if isinstance(input, list):
+                for msg in input:
+                    captured_prompts.append(msg.content)
+            elif hasattr(input, "to_messages"):
+                for msg in input.to_messages():
+                    captured_prompts.append(msg.content)
+            else:
+                captured_prompts.append(str(input))
+            return "Document A uses an LSTM encoder while Document B uses a Transformer encoder."
+
+    monkeypatch.setattr("app.agent.nodes.model", MockPromptCapturingLLM())
+
+    result = generate_node(state)
+    answer = result["answer"]
+
+    # 1. Assert the generated answer does NOT mention Topic X (BM25)
+    assert topic_x.lower() not in answer.lower(), f"Answer incorrectly mentioned Topic X: {answer}"
+
+    # 2. Assert the prompt explicitly instructs the LLM not to comment on previous question topics
+    joined_prompt = "\n".join(captured_prompts)
+    assert "Chat history is background context only" in joined_prompt
+    assert "Do NOT restate, re-address, or comment on the previous question's topic" in joined_prompt
+    assert "=== CURRENT QUESTION TO ANSWER ===" in joined_prompt
+
+
+
 

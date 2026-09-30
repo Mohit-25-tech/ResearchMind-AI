@@ -138,11 +138,28 @@ Guidelines:
 - Explicitly cite the source article or paper title and its URL.
 - Do NOT fabricate details or claim this information is from the user's uploaded documents.
 - If the external context does not contain sufficient details to answer, state: "This isn't covered in your documents or external literature."
+- Chat history is background context only, to help you resolve pronouns and references like 'these two' or 'it'. Do NOT restate, re-address, or comment on the previous question's topic unless the current question is actually about it. Answer ONLY the current question below.
 """
     ),
     (
         "human",
-        "Conversation History:\n{history}\n\nExternal Context:\n{context}\n\nQuestion: {question}"
+        """==================================================
+=== BACKGROUND CONVERSATION HISTORY ===
+==================================================
+(Use ONLY to resolve pronouns or references in the current question. Do NOT restate or comment on prior topics.)
+{history}
+
+==================================================
+=== EXTERNAL CONTEXT ===
+==================================================
+{context}
+
+==================================================
+=== CURRENT QUESTION TO ANSWER ===
+==================================================
+{question}
+
+INSTRUCTION: Answer ONLY the current question above. Chat history is background context only, to help you resolve pronouns and references like 'these two' or 'it'. Do NOT restate, re-address, or comment on the previous question's topic unless the current question is actually about it."""
     )
 ])
 
@@ -225,8 +242,14 @@ def generate_direct_node(state: AgentState) -> Dict[str, Any]:
     history_text = build_history(state.get("chat_history", []))
     prompt = (
         "You are ResearchMind AI, a helpful research assistant. Answer the user conversationally and concisely.\n"
-        f"Conversation History:\n{history_text}\n\n"
-        f"User: {state['question']}"
+        "Chat history is background context only, to help you resolve pronouns and references like 'these two' or 'it'. "
+        "Do NOT restate, re-address, or comment on the previous question's topic unless the current question is actually about it. Answer ONLY the current question below.\n\n"
+        f"=== BACKGROUND CONVERSATION HISTORY ===\n{history_text or '(None)'}\n\n"
+        "==================================================\n"
+        "=== CURRENT QUESTION TO ANSWER ===\n"
+        "==================================================\n"
+        f"{state['question']}\n\n"
+        "Answer:"
     )
     response = model.invoke(prompt)
     answer = response.content if hasattr(response, "content") else str(response)
@@ -648,11 +671,16 @@ def regenerate_node(state: AgentState) -> Dict[str, Any]:
     stricter_prompt = (
         "You are ResearchMind AI. A previous attempt contained ungrounded claims. "
         "Strictly answer the question using ONLY the provided context below. "
-        "Do NOT invent details. Do not include claims not directly verifiable in the context.\n\n"
-        f"Context:\n{context_str}\n\n"
-        f"History:\n{history_text}\n\n"
-        f"Question: {state['question']}\n\n"
-        "Provide a concise, factual, grounded answer:"
+        "Do NOT invent details. Do not include claims not directly verifiable in the context.\n"
+        "Chat history is background context only, to help you resolve pronouns and references like 'these two' or 'it'. "
+        "Do NOT restate, re-address, or comment on the previous question's topic unless the current question is actually about it. Answer ONLY the current question below.\n\n"
+        f"=== RETRIEVED CONTEXT ===\n{context_str}\n\n"
+        f"=== BACKGROUND CONVERSATION HISTORY ===\n{history_text or '(None)'}\n\n"
+        "==================================================\n"
+        "=== CURRENT QUESTION TO ANSWER ===\n"
+        "==================================================\n"
+        f"{state['question']}\n\n"
+        "Provide a concise, factual, grounded answer to ONLY the current question above:"
     )
 
     try:

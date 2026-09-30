@@ -50,3 +50,4 @@ ragas
 pytest
 langgraph
 tabulate
+matplotlib

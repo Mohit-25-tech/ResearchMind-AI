@@ -1,155 +1,230 @@
 {
-  "_comment": "TODO: Review and edit these 25 question/ground_truth pairs generated from your uploaded research library (BERT-based Ensemble Approaches for Hate Speech Detection, NLP architectures, etc.). Includes 5 multi-part/comparison questions and 3 unanswerable questions to test refusal.",
+  "_comment": "TODO: Review and verify these 25 question/ground_truth pairs generated from your uploaded research library (BERT_LSTM.pdf and LSTM_CNN+GRU.pdf). Contains single-doc factual, multi-doc comparison, unanswerable refusals, external general-knowledge, and vague rewrites.",
   "testset": [
     {
       "id": 1,
-      "question": "What is the primary objective of the BERT-based research paper?",
-      "ground_truth": "The primary objective is to investigate and propose BERT-based ensemble approaches for automated hate speech detection in online social media.",
-      "type": "single_hop"
+      "question": "What are the three publicly available Twitter datasets used for evaluation in BERT_LSTM.pdf?",
+      "ground_truth": "The three Twitter datasets used are the Davidson dataset, HatEval2019 (SemEval2019 Task 5), and OLID.",
+      "category": "single_doc_factual",
+      "expected_docs": ["BERT_LSTM.pdf"],
+      "expected_behavior": "answer",
+      "# TODO: review": "Verify dataset names against Section II/III of BERT_LSTM.pdf"
     },
     {
       "id": 2,
-      "question": "Who are the authors of the paper on BERT-based ensemble approaches?",
-      "ground_truth": "The authors are Khouloud Mnassri, Praboda Rajapaksha, Reza Farahbakhsh, and Noel Crespi from Telecom SudParis, Institut Polytechnique de Paris.",
-      "type": "single_hop"
+      "question": "Which ensemble techniques were evaluated in the BERT-based paper to improve hate speech classification?",
+      "ground_truth": "The evaluated ensemble techniques include soft voting, maximum value, hard voting, and stacking (stacked generalization).",
+      "category": "single_doc_factual",
+      "expected_docs": ["BERT_LSTM.pdf"],
+      "expected_behavior": "answer",
+      "# TODO: review": "Verify ensemble methods against Abstract and Section III-C of BERT_LSTM.pdf"
     },
     {
       "id": 3,
-      "question": "What does BERT stand for?",
-      "ground_truth": "BERT stands for Bidirectional Encoder Representations from Transformers.",
-      "type": "single_hop"
+      "question": "Who are the authors of the BERT-based ensemble approaches research paper?",
+      "ground_truth": "The authors are Khouloud Mnassri, Praboda Rajapaksha, Reza Farahbakhsh, and Noel Crespi from Telecom SudParis, Institut Polytechnique de Paris.",
+      "category": "single_doc_factual",
+      "expected_docs": ["BERT_LSTM.pdf"],
+      "expected_behavior": "answer",
+      "# TODO: review": "Verify author affiliations against header of BERT_LSTM.pdf"
     },
     {
       "id": 4,
-      "question": "Why is automated hate speech detection challenging on social media platforms?",
-      "ground_truth": "It is challenging due to the high volume of content, informal language, abbreviations, noisy data, sarcasm, and subtle context-dependent linguistic nuances.",
-      "type": "single_hop"
+      "question": "What neural architecture layers were integrated into BERT's sequence output in the CNN model in BERT_LSTM.pdf?",
+      "ground_truth": "Two 1D CNN layers (conv1D with ReLU activation), a Global Max Pooling layer, and two dense layers were integrated into BERT's sequence output.",
+      "category": "single_doc_factual",
+      "expected_docs": ["BERT_LSTM.pdf"],
+      "expected_behavior": "answer",
+      "# TODO: review": "Verify CNN layer specifications against Section III-B of BERT_LSTM.pdf"
     },
     {
       "id": 5,
-      "question": "What role does the Long Short-Term Memory (LSTM) network play in the baseline comparisons?",
-      "ground_truth": "LSTM is used as a recurrent neural network baseline to capture sequential dependencies in text before evaluating Transformer-based models.",
-      "type": "single_hop"
+      "question": "What specific text preprocessing rules were applied to hashtags in BERT_LSTM.pdf?",
+      "ground_truth": "Hashtags (#) were removed and their text was corrected into separate words, for example converting '#notracism' to 'not racism'.",
+      "category": "single_doc_factual",
+      "expected_docs": ["BERT_LSTM.pdf"],
+      "expected_behavior": "answer",
+      "# TODO: review": "Verify preprocessing steps against Section III-A of BERT_LSTM.pdf"
     },
     {
       "id": 6,
-      "question": "How does BERT process text bidirectionally compared to traditional sequential models?",
-      "ground_truth": "BERT uses self-attention mechanisms to condition on both left and right context simultaneously across all Transformer layers, unlike unidirectional left-to-right LSTMs.",
-      "type": "single_hop"
+      "question": "According to BERT_LSTM.pdf, which ensemble technique significantly outperformed the individual models and baselines?",
+      "ground_truth": "The stacking (stacked generalization) ensemble technique significantly outperformed the baselines and individual models.",
+      "category": "single_doc_factual",
+      "expected_docs": ["BERT_LSTM.pdf"],
+      "expected_behavior": "answer",
+      "# TODO: review": "Verify stacking results against Section IV and Conclusion of BERT_LSTM.pdf"
     },
     {
       "id": 7,
-      "question": "What pre-training tasks are typically utilized by BERT?",
-      "ground_truth": "BERT is pre-trained using Masked Language Modeling (MLM) and Next Sentence Prediction (NSP).",
-      "type": "single_hop"
+      "question": "What is the main finding regarding adversarial attacks on hate speech detection in LSTM_CNN+GRU.pdf?",
+      "ground_truth": "All proposed detection techniques are brittle against adversaries who insert typos, change word boundaries, or append innocuous words.",
+      "category": "single_doc_factual",
+      "expected_docs": ["LSTM_CNN+GRU.pdf"],
+      "expected_behavior": "answer",
+      "# TODO: review": "Verify attack vulnerability claim against Abstract of LSTM_CNN+GRU.pdf"
     },
     {
       "id": 8,
-      "question": "What is the benefit of using an ensemble approach over a single classifier?",
-      "ground_truth": "Ensemble approaches combine predictions from multiple diverse models to reduce variance, improve generalization, and achieve higher classification robustness.",
-      "type": "single_hop"
+      "question": "Who are the authors of the paper 'All You Need is Love: Evading Hate Speech Detection'?",
+      "ground_truth": "The authors are Tommi Gröndahl, Luca Pajola, Mika Juuti, Mauro Conti, and N. Asokan from Aalto University and University of Padua.",
+      "category": "single_doc_factual",
+      "expected_docs": ["LSTM_CNN+GRU.pdf"],
+      "expected_behavior": "answer",
+      "# TODO: review": "Verify author list against title page of LSTM_CNN+GRU.pdf"
     },
     {
       "id": 9,
-      "question": "Which evaluation metrics are primarily reported for hate speech classification in the paper?",
-      "ground_truth": "The primary evaluation metrics reported are Precision, Recall, Macro F1-score, and Accuracy.",
-      "type": "single_hop"
+      "question": "What model architecture was the only one to succeed in the cross-dataset transfer task T3 in Table 6 of LSTM_CNN+GRU.pdf?",
+      "ground_truth": "The CNN+GRU model trained on T3 was the only model to succeed in the task, while other models performed at or below random level.",
+      "category": "single_doc_factual",
+      "expected_docs": ["LSTM_CNN+GRU.pdf"],
+      "expected_behavior": "answer",
+      "# TODO: review": "Verify Table 6 cross-dataset results in LSTM_CNN+GRU.pdf"
     },
     {
       "id": 10,
-      "question": "What loss function is commonly used for fine-tuning classification models in this study?",
-      "ground_truth": "Cross-entropy loss (or binary cross-entropy for binary classification) is standardly used for fine-tuning.",
-      "type": "single_hop"
+      "question": "What six types of adversarial evasion attacks were performed in LSTM_CNN+GRU.pdf?",
+      "ground_truth": "The attacks include appending innocuous words (such as 'love'), changing word boundaries, inserting typos, leetspeak substitution, character insertion, and removing spaces.",
+      "category": "single_doc_factual",
+      "expected_docs": ["LSTM_CNN+GRU.pdf"],
+      "expected_behavior": "answer",
+      "# TODO: review": "Verify six attack categories against Section 3 of LSTM_CNN+GRU.pdf"
     },
     {
       "id": 11,
-      "question": "How are text inputs tokenized prior to feeding into the BERT model?",
-      "ground_truth": "Inputs are tokenized using WordPiece tokenization, adding special tokens [CLS] at the beginning and [SEP] at the end.",
-      "type": "single_hop"
+      "question": "In LSTM_CNN+GRU.pdf, how many total attack combinations were evaluated across replicated model-dataset pairs?",
+      "ground_truth": "A total of 42 attack combinations were evaluated (6 attacks performed on each of the 7 replicated model-dataset combinations).",
+      "category": "single_doc_factual",
+      "expected_docs": ["LSTM_CNN+GRU.pdf"],
+      "expected_behavior": "answer",
+      "# TODO: review": "Verify total attack count against Section 4 Results of LSTM_CNN+GRU.pdf"
     },
     {
       "id": 12,
-      "question": "What is the significance of the [CLS] token in BERT for classification?",
-      "ground_truth": "The final hidden state corresponding to the special [CLS] token serves as an aggregate sequence representation for classification tasks.",
-      "type": "single_hop"
+      "question": "What defense mechanism did the authors of LSTM_CNN+GRU.pdf use to mitigate the evasion attacks?",
+      "ground_truth": "The authors used adversarial training (retraining models on adversarial examples) to mitigate the attacks.",
+      "category": "single_doc_factual",
+      "expected_docs": ["LSTM_CNN+GRU.pdf"],
+      "expected_behavior": "answer",
+      "# TODO: review": "Verify defense mechanism against Section 4 of LSTM_CNN+GRU.pdf"
     },
     {
       "id": 13,
-      "question": "How do attention mechanisms help in identifying offensive language?",
-      "ground_truth": "Self-attention weights highlight key trigger words and their semantic relationships with other words in the sentence, even over long distances.",
-      "type": "single_hop"
+      "question": "Compare the primary focus of BERT_LSTM.pdf and LSTM_CNN+GRU.pdf regarding hate speech detection.",
+      "ground_truth": "BERT_LSTM.pdf focuses on developing high-accuracy detection ensembles combining BERT, LSTM, and CNNs with stacking, whereas LSTM_CNN+GRU.pdf focuses on attacking and evading hate speech detectors using adversarial perturbations like innocuous word appending and typos.",
+      "category": "multi_doc_comparison",
+      "expected_docs": ["BERT_LSTM.pdf", "LSTM_CNN+GRU.pdf"],
+      "expected_behavior": "answer",
+      "# TODO: review": "Verify high-level comparative objective between both papers"
     },
     {
       "id": 14,
-      "question": "What preprocessing steps are applied to the social media text corpus?",
-      "ground_truth": "Preprocessing typically includes lowercasing, removal of URLs, usernames/mentions, special symbols, and handling emojis and contractions.",
-      "type": "single_hop"
+      "question": "How do the models evaluated in doc A compare to the models evaluated in doc B?",
+      "ground_truth": "Doc A (BERT_LSTM.pdf) evaluates BERT fine-tuned with downstream CNN and LSTM layers combined via voting and stacking ensembles, while doc B (LSTM_CNN+GRU.pdf) evaluates standard LSTM, CNN+GRU, FastText, and linear baseline classifiers under adversarial attacks.",
+      "category": "multi_doc_comparison",
+      "expected_docs": ["BERT_LSTM.pdf", "LSTM_CNN+GRU.pdf"],
+      "expected_behavior": "answer",
+      "# TODO: review": "Verify doc A/doc B model architectural contrast"
     },
     {
       "id": 15,
-      "question": "What hardware or framework is commonly used for fine-tuning transformer models in PyTorch?",
-      "ground_truth": "Fine-tuning is commonly executed using PyTorch with GPU acceleration (such as NVIDIA CUDA) and Hugging Face Transformers.",
-      "type": "single_hop"
+      "question": "Both papers use hate speech datasets. What common dataset is referenced in both BERT_LSTM.pdf and LSTM_CNN+GRU.pdf?",
+      "ground_truth": "Both papers reference and evaluate on the Davidson et al. (2017) Twitter hate speech dataset.",
+      "category": "multi_doc_comparison",
+      "expected_docs": ["BERT_LSTM.pdf", "LSTM_CNN+GRU.pdf"],
+      "expected_behavior": "answer",
+      "# TODO: review": "Verify presence of Davidson dataset in both bibliographies and evaluations"
     },
     {
       "id": 16,
-      "question": "What is class imbalance and how does it affect hate speech datasets?",
-      "ground_truth": "Hate speech is typically a small minority class in real-world social data; class imbalance can cause models to bias heavily towards predicting non-hate text.",
-      "type": "single_hop"
+      "question": "What different approaches do these two papers take toward model evaluation—one focusing on ensemble performance and the other on robustness against evasion?",
+      "ground_truth": "The first paper evaluates classification performance (precision, recall, F1) across ensemble methods like stacking and soft voting, whereas the second paper evaluates model vulnerability against 6 adversarial evasion attacks and adversarial retraining.",
+      "category": "multi_doc_comparison",
+      "expected_docs": ["BERT_LSTM.pdf", "LSTM_CNN+GRU.pdf"],
+      "expected_behavior": "answer",
+      "# TODO: review": "Verify comparative evaluation paradigms of both papers"
     },
     {
       "id": 17,
-      "question": "What is the effect of learning rate warm-up during transformer fine-tuning?",
-      "ground_truth": "Learning rate warm-up gradually increases the learning rate during initial training steps to prevent divergent gradients and stabilize attention layers.",
-      "type": "single_hop"
+      "question": "Between doc 1 and doc 2, which paper investigates adversarial attacks like inserting 'love' into hate speech, and which paper proposes stacked generalization?",
+      "ground_truth": "Doc 2 (LSTM_CNN+GRU.pdf) investigates adversarial attacks such as inserting 'love' into text, while Doc 1 (BERT_LSTM.pdf) proposes stacked generalization ensembles.",
+      "category": "multi_doc_comparison",
+      "expected_docs": ["BERT_LSTM.pdf", "LSTM_CNN+GRU.pdf"],
+      "expected_behavior": "answer",
+      "# TODO: review": "Verify attribution to doc 1 vs doc 2"
     },
     {
       "id": 18,
-      "question": "How does BERT compare to LSTM in terms of capturing contextual nuances, and which model achieves higher overall F1-score?",
-      "ground_truth": "BERT captures bidirectional contextual relationships simultaneously across all words using multi-head self-attention, whereas LSTM processes sequences step-by-step; BERT achieves significantly higher F1-scores than LSTM.",
-      "type": "comparison"
+      "question": "What superconducting qubit coherence times and quantum gate fidelities are reported in the documents?",
+      "ground_truth": "I couldn't find that information in the uploaded documents.",
+      "category": "unanswerable",
+      "expected_docs": "none",
+      "expected_behavior": "refuse",
+      "# TODO: review": "Verify refusal response for out-of-corpus quantum computing question"
     },
     {
       "id": 19,
-      "question": "What are the trade-offs between a single fine-tuned BERT model versus an ensemble of models in terms of inference latency and predictive accuracy?",
-      "ground_truth": "A single fine-tuned BERT model provides lower computational overhead and faster inference latency, whereas an ensemble provides higher predictive accuracy and lower variance at the cost of increased memory and compute requirements.",
-      "type": "comparison"
+      "question": "How does the research team optimize CRISPR-Cas9 prime editing efficiency in mammalian embryonic cells?",
+      "ground_truth": "I couldn't find that information in the uploaded documents.",
+      "category": "unanswerable",
+      "expected_docs": "none",
+      "expected_behavior": "refuse",
+      "# TODO: review": "Verify refusal response for out-of-corpus gene editing question"
     },
     {
       "id": 20,
-      "question": "How do WordPiece embeddings in BERT differ from static word vectors like Word2Vec or GloVe when dealing with out-of-vocabulary words in informal social media text?",
-      "ground_truth": "WordPiece splits unfamiliar words into known subword units so it rarely encounters out-of-vocabulary tokens, whereas static Word2Vec or GloVe map unseen slang or misspellings to generic uninformative unknown tokens.",
-      "type": "comparison"
+      "question": "What was Microsoft's total Azure cloud revenue and operating profit margin for fiscal quarter Q3 2024?",
+      "ground_truth": "I couldn't find that information in the uploaded documents.",
+      "category": "unanswerable",
+      "expected_docs": "none",
+      "expected_behavior": "refuse",
+      "# TODO: review": "Verify refusal response for out-of-corpus corporate earnings question"
     },
     {
       "id": 21,
-      "question": "Explain the architectural difference between recurrent feedback in LSTMs and multi-head self-attention in Transformers, and why Transformers scale better during training.",
-      "ground_truth": "LSTMs rely on sequential hidden state passing where step t depends on step t-1, preventing parallelization; Transformers use multi-head self-attention without sequential recurrence, allowing parallel processing across the entire sequence during training on GPUs.",
-      "type": "comparison"
+      "question": "what is BM25?",
+      "ground_truth": "BM25 (Best Matching 25) is a probabilistic ranking function used in information retrieval to estimate the relevance of documents to a given search query based on term frequency and document length normalization.",
+      "category": "external_knowledge",
+      "expected_docs": "external",
+      "expected_behavior": "external_answer",
+      "# TODO: review": "Verify external routing and standard BM25 retrieval definition"
     },
     {
       "id": 22,
-      "question": "What are the two stages in the BERT lifecycle—pre-training and fine-tuning—and what data is used in each stage?",
-      "ground_truth": "Pre-training is conducted on large unlabelled corpora (BooksCorpus and English Wikipedia) using self-supervised objectives, while fine-tuning is conducted on a smaller domain-specific labeled dataset for the specific classification task.",
-      "type": "multi_part"
+      "question": "explain gradient descent",
+      "ground_truth": "Gradient descent is a first-order iterative optimization algorithm used in machine learning to minimize a loss function by iteratively moving in the direction of steepest descent (negative gradient).",
+      "category": "external_knowledge",
+      "expected_docs": "external",
+      "expected_behavior": "external_answer",
+      "# TODO: review": "Verify external routing and gradient descent optimization explanation"
     },
     {
       "id": 23,
-      "question": "What are the quantum computing benchmarks and superconducting qubit coherence times evaluated in this paper?",
-      "ground_truth": "I couldn't find that information in the uploaded documents.",
-      "type": "unanswerable"
+      "question": "what is a transformer neural network?",
+      "ground_truth": "A transformer neural network is a deep learning architecture introduced in 'Attention Is All You Need' that relies on self-attention mechanisms to process sequential input data in parallel without recurrent connections.",
+      "category": "external_knowledge",
+      "expected_docs": "external",
+      "expected_behavior": "external_answer",
+      "# TODO: review": "Verify external routing and transformer neural network definition"
     },
     {
       "id": 24,
-      "question": "How does the paper optimize CRISPR-Cas9 base editing efficiency for human genetic therapies?",
-      "ground_truth": "I couldn't find that information in the uploaded documents.",
-      "type": "unanswerable"
+      "question": "how do they trick the detectors?",
+      "ground_truth": "Adversaries evade hate speech detectors by inserting subtle typos, altering word boundaries, removing whitespace, using leetspeak, or appending innocuous positive words like 'love' that mislead the classifier while remaining human-readable.",
+      "category": "vague_rewrite",
+      "expected_docs": ["LSTM_CNN+GRU.pdf"],
+      "expected_behavior": "answer",
+      "# TODO: review": "Verify query rewrite succeeds on evasion techniques"
     },
     {
       "id": 25,
-      "question": "What was the total financial revenue and net profit margin reported by Apple in Q4 2023 according to the documents?",
-      "ground_truth": "I couldn't find that information in the uploaded documents.",
-      "type": "unanswerable"
+      "question": "which ensemble method worked best in the experiments?",
+      "ground_truth": "In BERT_LSTM.pdf, the stacked generalization (stacking) ensemble technique performed best, significantly outperforming individual classifiers and voting baselines.",
+      "category": "vague_rewrite",
+      "expected_docs": ["BERT_LSTM.pdf"],
+      "expected_behavior": "answer",
+      "# TODO: review": "Verify query rewrite succeeds on stacking ensemble conclusion"
     }
   ]
 }
